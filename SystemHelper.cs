@@ -1,0 +1,50 @@
+﻿using Sandbox.Game.EntityComponents;
+using Sandbox.ModAPI.Ingame;
+using Sandbox.ModAPI.Interfaces;
+using SpaceEngineers.Game.ModAPI.Ingame;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
+using System.Text;
+using VRage;
+using VRage.Collections;
+using VRage.Game;
+using VRage.Game.Components;
+using VRage.Game.GUI.TextPanel;
+using VRage.Game.ModAPI.Ingame;
+using VRage.Game.ModAPI.Ingame.Utilities;
+using VRage.Game.ObjectBuilders.Definitions;
+using VRageMath;
+
+namespace IngameScript
+{
+
+	static class SystemHelper
+	{
+		public static bool AddBlockIfType<T>(IMyTerminalBlock block, out T orig) where T : class, IMyTerminalBlock
+		{
+			T typedBlock = block as T;
+			orig = typedBlock;
+			if (typedBlock == null)
+				return false;
+			return true;
+		}
+		public static bool AddToListIfType<T>(IMyTerminalBlock block, List<T> list) where T : class, IMyTerminalBlock
+		{
+			T typedBlock;
+			return AddToListIfType(block, list, out typedBlock);
+		}
+		public static bool AddToListIfType<T>(IMyTerminalBlock block, List<T> list, out T typedBlock) where T : class, IMyTerminalBlock
+		{
+			typedBlock = block as T;
+			if (typedBlock != null)
+			{
+				list.Add(typedBlock);
+				return true;
+			}
+			return false;
+		}
+	}
+}
