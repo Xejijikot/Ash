@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33723.286
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XejijiGunFireControl", "XejijiGunFireControl.csproj", "{D03BBF92-A33E-43C2-8C9F-D6CAA433E03E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D03BBF92-A33E-43C2-8C9F-D6CAA433E03E}.Debug|x64.ActiveCfg = Debug|x64
+		{D03BBF92-A33E-43C2-8C9F-D6CAA433E03E}.Debug|x64.Build.0 = Debug|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {859E990D-4FCE-4618-A267-46A39B2D036E}
+	EndGlobalSection
+EndGlobal
