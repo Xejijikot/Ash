@@ -52,10 +52,15 @@ namespace IngameScript
 		public bool UpdateTarget(EnemyTargetedInfo newInfo)
 		{
 			if (lockedtarget != null)
-				if (lockedtarget.EntityId == newInfo.EntityId)
+				if (lockedtarget.EntityId == newInfo.EntityId && lockedtarget.LastLockTick < newInfo.LastLockTick)
 				{
-					lockedtarget = newInfo;
-					return true;
+					lockedtarget.Position = newInfo.Position;
+					lockedtarget.LastLockTick = newInfo.LastLockTick;
+					lockedtarget.TargetSubsystems = newInfo.TargetSubsystems;
+					lockedtarget.PowerSubsystems = newInfo.PowerSubsystems;
+					lockedtarget.PropSubsystems = newInfo.PropSubsystems;
+					lockedtarget.WeaponSubsystems = newInfo.WeaponSubsystems;
+                    return true;
 				}
             return false;
 		}

@@ -79,7 +79,7 @@ namespace IngameScript
         }
 
 
-        public static void DrawTarget(ref string debugInfo, DrawingInfo dI, int targetingPoint = 0)
+        public static void DrawTarget(ref string debugInfo, DrawingInfo dI, int targetingPoint = 0, bool form = true)
         {
             if (dI.Target != null)
             {
@@ -98,8 +98,11 @@ namespace IngameScript
                 if (viewvector.Length() > lcdToTarget.Length())
                 {
                     //debugInfo += $"{marker}\n";
-                    float size = _smallLsd;
-                    DrawBox(dI.color, dI.frame, rect.Center + (marker * mult));
+                    if (form)
+                        DrawBox(dI.color, dI.frame, rect.Center + (marker * mult));
+                    else
+                        DrawPoint(dI.color, dI.frame, rect.Center + (marker * mult));
+
                 }
             }
 
@@ -211,6 +214,7 @@ namespace IngameScript
             DrawInterface(dI, Language, isTurret, isVeachle);
             //string aiStatus = "";
             Vector2 statusPos = new Vector2(-40, 60);
+            Vector2 infoPos = new Vector2(-33, 40);
             DrawSight(dI.color, dI.frame, rect.Center + (marker * mult));
             if (searching)
                 DrawXSight(dI.color, dI.frame, rect.Center + (marker * mult));
@@ -225,8 +229,13 @@ namespace IngameScript
                 Vector2 tankPos = new Vector2(150, 150);
                 DrawHull(dI.color, dI.frame, tankPos + rect.Center + (marker * mult), tankInfo.hullRotation);
                 DrawTurret(dI.color, dI.frame, tankPos + rect.Center + (marker * mult), tankInfo.turretRotation);
+                DrawTurretInfo(dI.color, dI.frame, tankPos + infoPos + rect.Center + (marker * mult), tankInfo.block, tankInfo.centered);
             }
-            
+            else
+            {
+                if (isTurret)
+                    DrawTurretInfo(dI.color, dI.frame, infoPos + rect.Center + (marker * mult), tankInfo.block, tankInfo.centered);
+            }
         }
         public static void SettingsInterface(DrawingInfo dI, ref Dictionary<int, MyTuple<string, float, float>> obsDict, ref Dictionary<int, MyTuple<string, float, float, float>> weaponDict, int nubmerOfLine, int numberOfCockpit, int numberOfWeapon, string Language, float scale = 1f, bool isTurret = false, bool isVeachle = false)
         {
@@ -636,7 +645,16 @@ namespace IngameScript
             float cos = (float)Math.Cos(rotation);
             frame.Add(new MySprite(SpriteType.TEXTURE, "SquareSimple", new Vector2(cos * 0f - sin * 0f, sin * 0f + cos * 0f) + centerPos, new Vector2(40f, 60f), color, null, TextAlignment.CENTER, 0f + rotation)); // sprite4
             frame.Add(new MySprite(SpriteType.TEXTURE, "SquareSimple", new Vector2(cos * 0f - sin * 0f, sin * 0f + cos * 0f) + centerPos, new Vector2(38f, 58f), _BLACK, null, TextAlignment.CENTER, 0f + rotation)); // sprite4
-            frame.Add(new MySprite(SpriteType.TEXTURE, "AH_BoreSight", new Vector2(cos * 0f - sin * -40f, sin * 0f + cos * -40f) + centerPos, new Vector2(40f, 40f), color, null, TextAlignment.CENTER, - 1.5708f + rotation)); // sprite5
+            frame.Add(new MySprite(SpriteType.TEXTURE, "AH_BoreSight", new Vector2(cos * 0f - sin * -40f, sin * 0f + cos * -40f) + centerPos, new Vector2(40f, 40f), color, null, TextAlignment.CENTER, -1.5708f + rotation)); // sprite5
+        }
+        public static void DrawTurretInfo(Color color, MySpriteDrawFrame frame, Vector2 centerPos, bool block, bool centered)
+        {
+            string locked = "◉ Block";
+            string сentering = "↻ Centering";
+            if (block)
+                frame.Add(new MySprite(SpriteType.TEXT, locked, centerPos, null, color, "DEBUG", TextAlignment.LEFT, 0.7f));
+            if (centered)
+                frame.Add(new MySprite(SpriteType.TEXT, сentering, centerPos + new Vector2(-16, 19), null, color, "DEBUG", TextAlignment.LEFT, 0.7f));
         }
     }
     public class DrawingInfo
@@ -666,11 +684,14 @@ namespace IngameScript
     }
     public class TankInfo
     {
+        public bool block, centered;
         public float turretRotation;
         public bool drawTank;
         public float hullRotation;
-        public TankInfo(float turretRotation, bool drawTank, float hullRotation)
+        public TankInfo(float turretRotation, bool drawTank, float hullRotation, bool block, bool centered)
         {
+            this.block = block;
+            this.centered = centered;
             this.turretRotation = turretRotation;
             this.drawTank = drawTank;
             this.hullRotation = hullRotation;

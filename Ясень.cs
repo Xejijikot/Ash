@@ -92,24 +92,26 @@ namespace IngameScript
         readonly MyIni _myIni = new MyIni();
         const string INI_SECTION_NAMES = "Names", INI_LANGUAGE = "Language", INI_GROUP_NAME_TAG = "Group name tag", INI_AZ_ROTOR_NAME_TAG = "Azimuth Rotor name tag", INI_EL_ROTOR_NAME_TAG = "Elevation Rotor name tag", INI_MAIN_COCKPIT_NAME_TAG = "Main Cockpit name tag",
             INI_SECTION_RADAR = "Radar", INI_INITIAL_RANGE = "Initial Range",
-            INI_SECTION_CONTROLS = "Controls", INI_EL_MULT = "Elevation Rotor Multiplier", INI_AZ_MULT = "Azimuth Rotor Multiplier", INI_YAW_MULT = "Yaw Gyro Multiplier", INI_PITCH_MULT = "Pitch Gyro Multiplier",
+            INI_SECTION_CONTROLS = "Controls", INI_EL_MULT = "Elevation Rotor Multiplier", INI_AZ_MULT = "Azimuth Rotor Multiplier", INI_YAW_MULT = "Yaw Gyro Multiplier", INI_PITCH_MULT = "Pitch Gyro Multiplier", INI_INTERACTIVE_MOD = "Interactive Mod",
             INI_SECTION_WEAPON = "Weapon", INI_NUMBER_OF_WEAPON = "Number of weapon", INI_WEAPON_SHOOT_VELOCITY = "Projectile velocity", INI_WEAPON_FIRE_RANGE = "Shot range", INI_WEAPON_RELOAD_TIME = "Reload Time",
             INI_SECTION_COCKPIT = "Cockpit", INI_NUMBER_OF_COCKPIT = "Number of cockpit", INI_COEF_UP = "Observer position - up", INI_COEF_BACK = "Observer position - back",
-            INI_SECTION_TARGETS = "Targets", INI_ENEMY = "Enemy", INI_NEUTRAL = "Neutral", INI_ALLIE = "Allie", INI_DISPLAYED_TARGET = "Displayed Target";
+            INI_SECTION_TARGETS = "Targets", INI_ENEMY = "Enemy", INI_NEUTRAL = "Neutral", INI_ALLIE = "Allie", INI_DISPLAYED_TARGET = "Displayed Target",
+            INI_SECTION_DEFAULTS = "Defaults", INI_AZIMUTH_ANGLE = "Azimuth default angle", INI_ELEVATION_ANGLE = "Elevation default angle";
 
         string _language = "English", _FCSTag = "Ash", _azimuthRotorTag = "Azimuth", _elevationRotorTag = "Elevation", _mainCockpitTag = "Main";
 
-        float elevationSpeedMult = 0.005f, azimuthSpeedMult = 0.005f, yawMult = 0.001f, pitchMult = 0.001f,
+        float elevationSpeedMult = 0.001f, azimuthSpeedMult = 0.001f, yawMult = 0.001f, pitchMult = 0.001f,
             _myWeaponShotVelocity = 400, _myWeaponRangeToFire = 800, _myWeaponReloadTime = 1 / 2.5f,
             _obsCoefUp = 0, _obsCoefBack = 0,
-            _initialRange = 2000;
+            _initialRange = 2000,
+            _azimuthDefaultAngle = 0, _elevationDefaultAngle = 0;
 
-        bool isTurret = false, canAutoTarget = false, stabilization = true, settingsMode = false, autotarget = false, aimAssist = false, isVehicle = false, getTarget = false, drawTank = true;
+        bool isTurret = false, canAutoTarget = false, stabilization = true, settingsMode = false, autotarget = false, aimAssist = false, isVehicle = false, getTarget = false, drawTank = true, interactive = true, block = false, centering = false;
         long Tick = 0;
         bool allie = false, enemy = true, neutral = true;
         IMyMotorStator _mainElRotor;
 
-        float horizont = 0, vertical = 0, xMove = 0, yMove = 0, menuMove = 0;
+        float horizont = 0, vertical = 0, xMove = 0, yMove = 0, menuMove = 0, Y_button;
 
         int menuTimer = 0, menuTab = 0, menuline = 0, myCockpit = 0, myWeapon = 0, _targetingPoint = 1;
         public Program()
@@ -146,7 +148,7 @@ namespace IngameScript
                         settingsMode = true;
                     break;
                 case "action":
-                    getTarget = true;
+                    Action();
                     break;
                 case "switch_lock":
                     if (_radar.Searching)
@@ -201,6 +203,12 @@ namespace IngameScript
                 case "switch_stab":
                     stabilization = !stabilization;
                     break;
+                case "block":
+                    Block();
+                    break;
+                case "centering":
+                    centering = !centering;
+                    break;
                 default:
                     break;
             }
@@ -221,11 +229,11 @@ namespace IngameScript
             if (_myShipController != null)
                 _activeShipController = _myShipController;
             else
-                foreach (var cocpit in _shipControllers)
+                foreach (var cockpit in _shipControllers)
                 {
-                    if (cocpit.IsUnderControl)
+                    if (cockpit.IsUnderControl)
                     {
-                        _activeShipController = cocpit;
+                        _activeShipController = cockpit;
                         break;
                     }
                 }
@@ -237,152 +245,172 @@ namespace IngameScript
                 xMove = _activeShipController.MoveIndicator.X;
                 yMove = _activeShipController.MoveIndicator.Z;
                 menuMove = _activeShipController.RollIndicator;
+                Y_button = _activeShipController.MoveIndicator.Y;
             }
 
             //Menu command
             if ((xMove != 0 || yMove != 0 || menuMove != 0) && settingsMode)
             {
-                if (menuTimer == 0) //Можем ли считывать действия
-                {
-                    //Раздел меню
-                    if (menuMove != 0)
+                    if (menuTimer == 0) //Можем ли считывать действия
                     {
-                        menuline = 0;
-                        menuTab += (int)Math.Round(menuMove);
-                        if (menuTab > 2)
+                        //Раздел меню
+                        if (menuMove != 0)
                         {
-                            menuTab = 0;
+                            menuline = 0;
+                            menuTab += (int)Math.Round(menuMove);
+                            if (menuTab > 2)
+                            {
+                                menuTab = 0;
+                            }
+                            if (menuTab < 0)
+                            {
+                                menuTab = 2;
+                            }
                         }
-                        if (menuTab < 0)
+                        switch (menuTab)
                         {
-                            menuTab = 2;
+                            //Для "Базовых"
+                            case 0:
+                                if (yMove != 0)
+                                {
+                                    menuline += (int)Math.Round(yMove);
+                                    if (menuline > 2)
+                                    {
+                                        menuline = 0;
+                                    }
+                                    else if (menuline < 0)
+                                    {
+                                        menuline = 2;
+                                    }
+                                }
+                                if (xMove != 0)
+                                {
+                                    switch (menuline)
+                                    {
+                                        case 0:
+                                            if (_language == "Russian")
+                                                _language = "English";
+                                            else
+                                                _language = "Russian";
+                                            break;
+                                        case 1:
+                                            myCockpit += (int)Math.Round(xMove);
+                                            if (myCockpit > (_observerInSC.Count() - 1))
+                                                myCockpit = 0;
+                                            else if (myCockpit < 0)
+                                                myCockpit = _observerInSC.Count() - 1;
+                                            break;
+                                        case 2:
+                                            myWeapon += (int)Math.Round(xMove);
+                                            if (myWeapon > (_weaponDict.Count() - 1))
+                                                myWeapon = 0;
+                                            else if (myWeapon < 0)
+                                                myWeapon = _weaponDict.Count() - 1;
+                                            break;
+                                    }
+                                }
+                                break;
+                            case 1:     //Для "Расширенных"
+                                if (yMove != 0)
+                                {
+                                    menuline += (int)Math.Round(yMove);
+                                    if (menuline > 3)
+                                    {
+                                        menuline = 0;
+                                    }
+                                    else if (menuline < 0)
+                                    {
+                                        menuline = 3;
+                                    }
+                                }
+                                if (xMove != 0)
+                                {
+                                    switch (menuline)
+                                    {
+                                        case 0:
+                                            myCockpit = 5;
+                                            _obsCoefUp += 0.01f * (float)Math.Round(xMove);
+                                            break;
+                                        case 1:
+                                            myCockpit = 5;
+                                            _obsCoefBack += 0.01f * (float)Math.Round(xMove);
+                                            break;
+                                        case 2:
+                                            myWeapon = 6;
+                                            _myWeaponShotVelocity += 50 * (float)Math.Round(xMove);
+                                            break;
+                                        case 3:
+                                            myWeapon = 6;
+                                            _myWeaponRangeToFire += 100 * (float)Math.Round(xMove);
+                                            break;
+                                    }
+                                }
+                                break;
+                            case 2:     //"Радар"
+                                if (yMove != 0)
+                                {
+                                    menuline += (int)Math.Round(yMove);
+                                    if (menuline > 4)
+                                    {
+                                        menuline = 0;
+                                    }
+                                    else if (menuline < 0)
+                                    {
+                                        menuline = 4;
+                                    }
+                                }
+                                if (xMove != 0)
+                                {
+                                    switch (menuline)
+                                    {
+                                        case 0:
+                                            _targetingPoint += (int)Math.Round(xMove);
+                                            if (_targetingPoint > 2)
+                                                _targetingPoint = 0;
+                                            else if (_targetingPoint < 0)
+                                                _targetingPoint = 2;
+                                            break;
+                                        case 1:
+                                            _initialRange += 500f * (float)Math.Round(xMove);
+                                            if (_initialRange < 500)
+                                                _initialRange = 500;
+                                            break;
+                                        case 2:
+                                            enemy = !enemy;
+                                            break;
+                                        case 3:
+                                            neutral = !neutral;
+                                            break;
+                                        case 4:
+                                            allie = !allie;
+                                            break;
+                                    }
+                                    _radar.SetTargets(allie, neutral, enemy);
+                                }
+                                break;
                         }
+                        SC();
                     }
-                    switch (menuTab)
+                menuTimer = timeToUpdateSettings;
+            }
+            else if (!settingsMode && (menuMove!= 0 || Y_button!= 0))
+            {
+                if (interactive && menuTimer == 0)
+                {
+                    if (menuMove > 0)
                     {
-                        //Для "Базовых"
-                        case 0:
-                            if (yMove != 0)
-                            {
-                                menuline += (int)Math.Round(yMove);
-                                if (menuline > 2)
-                                {
-                                    menuline = 0;
-                                }
-                                else if (menuline < 0)
-                                {
-                                    menuline = 2;
-                                }
-                            }
-                            if (xMove != 0)
-                            {
-                                switch (menuline)
-                                {
-                                    case 0:
-                                        if (_language == "Russian")
-                                            _language = "English";
-                                        else
-                                            _language = "Russian";
-                                        break;
-                                    case 1:
-                                        myCockpit += (int)Math.Round(xMove);
-                                        if (myCockpit > (_observerInSC.Count() - 1))
-                                            myCockpit = 0;
-                                        else if (myCockpit < 0)
-                                            myCockpit = _observerInSC.Count() - 1;
-                                        break;
-                                    case 2:
-                                        myWeapon += (int)Math.Round(xMove);
-                                        if (myWeapon > (_weaponDict.Count() - 1))
-                                            myWeapon = 0;
-                                        else if (myWeapon < 0)
-                                            myWeapon = _weaponDict.Count() - 1;
-                                        break;
-                                }
-                            }
-                            break;
-                        case 1:     //Для "Расширенных"
-                            if (yMove != 0)
-                            {
-                                menuline += (int)Math.Round(yMove);
-                                if (menuline > 3)
-                                {
-                                    menuline = 0;
-                                }
-                                else if (menuline < 0)
-                                {
-                                    menuline = 3;
-                                }
-                            }
-                            if (xMove != 0)
-                            {
-                                switch (menuline)
-                                {
-                                    case 0:
-                                        myCockpit = 5;
-                                        _obsCoefUp += 0.01f * (float)Math.Round(xMove);
-                                        break;
-                                    case 1:
-                                        myCockpit = 5;
-                                        _obsCoefBack += 0.01f * (float)Math.Round(xMove);
-                                        break;
-                                    case 2:
-                                        myWeapon = 6;
-                                        _myWeaponShotVelocity += 50 * (float)Math.Round(xMove);
-                                        break;
-                                    case 3:
-                                        myWeapon = 6;
-                                        _myWeaponRangeToFire += 100 * (float)Math.Round(xMove);
-                                        break;
-                                }
-                            }
-                            break;
-                        case 2:     //"Радар"
-                            if (yMove != 0)
-                            {
-                                menuline += (int)Math.Round(yMove);
-                                if (menuline > 4)
-                                {
-                                    menuline = 0;
-                                }
-                                else if (menuline < 0)
-                                {
-                                    menuline = 4;
-                                }
-                            }
-                            if (xMove != 0)
-                            {
-                                switch (menuline)
-                                {
-                                    case 0:
-                                        _targetingPoint += (int)Math.Round(xMove);
-                                        if (_targetingPoint > 2)
-                                            _targetingPoint = 0;
-                                        else if (_targetingPoint < 0)
-                                            _targetingPoint = 2;
-                                        break;
-                                    case 1:
-                                        _initialRange += 500f * (float)Math.Round(xMove);
-                                        if (_initialRange < 500)
-                                            _initialRange = 500;
-                                        break;
-                                    case 2:
-                                        enemy = !enemy;
-                                        break;
-                                    case 3:
-                                        neutral = !neutral;
-                                        break;
-                                    case 4:
-                                        allie = !allie;
-                                        break;
-                                }
-                                _radar.SetTargets(allie, neutral, enemy);
-                            }
-                            break;
+                        Action();
+                    }
+                    if (menuMove < 0)
+                    {
+                        Block();
+                    }
+                    if (Y_button < 0)
+                    {
+                        centering = !centering;
                     }
                 }
                 menuTimer = timeToUpdateSettings;
-                SC();
             }
             //Getting information about system from dictionary
             //Cockpit
@@ -417,8 +445,8 @@ namespace IngameScript
 
             if (isTurret)
             {
-                ShootDirection = _turret.referenceGun.WorldMatrix.Forward;
-                MyPos = _turret.referenceGun.GetPosition();
+                ShootDirection = _turret.referenceBlock.WorldMatrix.Forward;
+                MyPos = _turret.referenceBlock.GetPosition();
             }
             else if (isVehicle)
             {
@@ -489,18 +517,19 @@ namespace IngameScript
                                 _turret.Status(ref _statusInfo, _language, _azimuthRotorTag, _elevationRotorTag);
                                 _turret.Update(Intersept.GetValueOrDefault(), false, azimuthSpeedMult * horizont, elevationSpeedMult * vertical, false);
                             }
+                            centering = false;
                         }
                         else
                         {
                             _turret.Status(ref _statusInfo, _language, _azimuthRotorTag, _elevationRotorTag);
-                            _turret.Update(azimuthSpeedMult * horizont, elevationSpeedMult * vertical, stabilization);
+                            _turret.Update(azimuthSpeedMult * horizont, elevationSpeedMult * vertical, ref centering, _azimuthDefaultAngle, _elevationDefaultAngle, stabilization);
                         };
                     }
                     else
                     {
 
                         _turret.Status(ref _statusInfo, _language, _azimuthRotorTag, _elevationRotorTag);
-                        _turret.Update(azimuthSpeedMult * horizont, elevationSpeedMult * vertical, stabilization);
+                        _turret.Update(azimuthSpeedMult * horizont, elevationSpeedMult * vertical, ref centering, _azimuthDefaultAngle, _elevationDefaultAngle, stabilization);
                     }
                 }
                 //Vehicle
@@ -601,20 +630,15 @@ namespace IngameScript
                         DI = defaultI;
                         if (_radar.lockedtarget != null)
                         {
-                            if (_radar.lockedtarget.TargetSubsystems.Count == 0)
-                            {
-                                DI.color = _targetColor;
+                            
+                                DI.Target = _radar.lockedtarget;
                                 Drawing.DrawTarget(ref _debuginfo, DI, _targetingPoint);
-                                DI = defaultI;
-                            }
-                            else
-                            {
-                                Drawing.DrawSubsystemType(ref _debuginfo, DI, _weaponColor, _propulsionColor, _powerColor);
+                                if (_radar.lockedtarget.TargetSubsystems.Count != 0)
+                                    Drawing.DrawSubsystemType(ref _debuginfo, DI, _weaponColor, _propulsionColor, _powerColor);
                                 foreach (var subsystem in _radar.lockedtarget.TargetSubsystems)
                                 {
                                     Drawing.DrawSubsystem(ref _debuginfo, DI, subsystem, _weaponColor, _propulsionColor, _powerColor);
                                 }
-                            }
                         }
                         if (Intersept != null)
                         {
@@ -641,7 +665,7 @@ namespace IngameScript
                         }
                         DI.point = obsForward.GetValueOrDefault();
                         DI.color = _interfaceColor;
-                        TankInfo tankInfo = new TankInfo(0, false, 0);
+                        TankInfo tankInfo = new TankInfo(0, false, 0, block, centering);
                         if (isTurret)
                         {
                             if (drawTank)
@@ -930,7 +954,7 @@ namespace IngameScript
 
                     }
                 }
-                if (_rotorA != null && _mainElRotor != null && _myGuns.Count != 0)
+                if (_rotorA != null && _mainElRotor != null)
                 {
                     _turret.UpdateBlocks(_rotorA, _rotorsE, _mainElRotor, _myGuns, _radarCameras, _myGyro);
                     updateInfo += $"{Languages.Translate(_language, "AUTOTURRETSUCCESS")}\n";
@@ -967,6 +991,26 @@ namespace IngameScript
             }
             return true;
         }
+        void Action()
+        {
+            if (_radar.lockedtarget == null && _turretRadar.GetTargets().Count != 0)
+            {
+                getTarget = true;
+                aimAssist = true;
+            }
+            else
+            {
+                _radar.DropLock();
+                aimAssist = false;
+            }
+        }
+        void Block()
+        {
+            if (!isTurret)
+                return;
+            block = !block;
+            _turret.Block(block);
+        }
         void LoadIniConfig()
         {
             _myIni.Clear();
@@ -985,7 +1029,8 @@ namespace IngameScript
             elevationSpeedMult = (float)_myIni.Get(INI_SECTION_CONTROLS, INI_EL_MULT).ToDouble(elevationSpeedMult);
             azimuthSpeedMult = (float)_myIni.Get(INI_SECTION_CONTROLS, INI_AZ_MULT).ToDouble(azimuthSpeedMult);
             yawMult = (float)_myIni.Get(INI_SECTION_CONTROLS, INI_YAW_MULT).ToDouble(yawMult);
-            pitchMult = (float)_myIni.Get(INI_SECTION_CONTROLS, INI_YAW_MULT).ToDouble(pitchMult);
+            pitchMult = (float)_myIni.Get(INI_SECTION_CONTROLS, INI_PITCH_MULT).ToDouble(pitchMult);
+            interactive = _myIni.Get(INI_SECTION_CONTROLS, INI_INTERACTIVE_MOD).ToBoolean(interactive);
             myWeapon = _myIni.Get(INI_SECTION_WEAPON, INI_NUMBER_OF_WEAPON).ToInt32(myWeapon);
             _myWeaponRangeToFire = (float)_myIni.Get(INI_SECTION_WEAPON, INI_WEAPON_FIRE_RANGE).ToDouble(_myWeaponRangeToFire);
             _myWeaponShotVelocity = (float)_myIni.Get(INI_SECTION_WEAPON, INI_WEAPON_SHOOT_VELOCITY).ToDouble(_myWeaponShotVelocity);
@@ -993,11 +1038,12 @@ namespace IngameScript
             myCockpit = _myIni.Get(INI_SECTION_COCKPIT, INI_NUMBER_OF_COCKPIT).ToInt32(myCockpit);
             _obsCoefUp = (float)_myIni.Get(INI_SECTION_COCKPIT, INI_COEF_UP).ToDouble(_myWeaponShotVelocity);
             _obsCoefBack = (float)_myIni.Get(INI_SECTION_COCKPIT, INI_COEF_BACK).ToDouble(_myWeaponShotVelocity);
+            _azimuthDefaultAngle = (float)_myIni.Get(INI_SECTION_DEFAULTS, INI_AZIMUTH_ANGLE).ToDouble(_azimuthDefaultAngle);
+            _elevationDefaultAngle = (float)_myIni.Get(INI_SECTION_DEFAULTS, INI_ELEVATION_ANGLE).ToDouble(_elevationDefaultAngle);
             allie = _myIni.Get(INI_SECTION_TARGETS, INI_ALLIE).ToBoolean(allie);
             neutral = _myIni.Get(INI_SECTION_TARGETS, INI_NEUTRAL).ToBoolean(neutral);
             enemy = _myIni.Get(INI_SECTION_TARGETS, INI_ENEMY).ToBoolean(enemy);
             _targetingPoint = _myIni.Get(INI_SECTION_TARGETS, INI_DISPLAYED_TARGET).ToInt32(_targetingPoint);
-
             SC();
         }
 
@@ -1014,6 +1060,7 @@ namespace IngameScript
             _myIni.Set(INI_SECTION_CONTROLS, INI_AZ_MULT, azimuthSpeedMult);
             _myIni.Set(INI_SECTION_CONTROLS, INI_YAW_MULT, yawMult);
             _myIni.Set(INI_SECTION_CONTROLS, INI_PITCH_MULT, pitchMult);
+            _myIni.Set(INI_SECTION_CONTROLS, INI_INTERACTIVE_MOD, interactive);
             _myIni.Set(INI_SECTION_WEAPON, INI_NUMBER_OF_WEAPON, myWeapon);
             _myIni.Set(INI_SECTION_WEAPON, INI_WEAPON_FIRE_RANGE, _myWeaponRangeToFire);
             _myIni.Set(INI_SECTION_WEAPON, INI_WEAPON_SHOOT_VELOCITY, _myWeaponShotVelocity);
@@ -1021,6 +1068,8 @@ namespace IngameScript
             _myIni.Set(INI_SECTION_COCKPIT, INI_NUMBER_OF_COCKPIT, myCockpit);
             _myIni.Set(INI_SECTION_COCKPIT, INI_COEF_UP, _obsCoefUp);
             _myIni.Set(INI_SECTION_COCKPIT, INI_COEF_BACK, _obsCoefBack);
+            _myIni.Set(INI_SECTION_DEFAULTS, INI_AZIMUTH_ANGLE, _azimuthDefaultAngle);
+            _myIni.Set(INI_SECTION_DEFAULTS, INI_ELEVATION_ANGLE, _elevationDefaultAngle);
             _myIni.Set(INI_SECTION_TARGETS, INI_ALLIE, allie);
             _myIni.Set(INI_SECTION_TARGETS, INI_NEUTRAL, neutral);
             _myIni.Set(INI_SECTION_TARGETS, INI_ENEMY, enemy);

@@ -38,7 +38,7 @@ namespace IngameScript
         Vector3D lastInterceptVector;
         float MultiplierElevation;
         float deltaAzimuth;
-        public IMyUserControllableGun referenceGun;
+        public IMyTerminalBlock referenceBlock;
         public MatrixD turretMatrix { get; private set; }
         MatrixD lastWeaponMatrix;
         MatrixD lastTurretMatrix;
@@ -56,7 +56,7 @@ namespace IngameScript
         double? maneuvrabilityPitch = null;
         bool _firstUpdate = true;
         bool fullDriveYaw = false, fullDrivePitch = false;
-
+        bool block = false;
 
         public Turret()
         {
@@ -73,16 +73,20 @@ namespace IngameScript
             rotorsE = newRotorsE;
             rotorsE.Remove(mainElRotor);
             weapons = newWeapons;
-            referenceGun = null;
+            referenceBlock = null;
             foreach (var weapon in weapons)
             {
                 if (weapon.CubeGrid == MainElRotor.TopGrid)
                 {
-                    referenceGun = weapon;
+                    referenceBlock = weapon;
                     break;
                 }
             }
-            if (referenceGun == null)
+            if (referenceBlock == null)
+            {
+                referenceBlock = cameras[0];
+            }
+            if (referenceBlock == null)
                 return false;
             _turretGyros.Clear();
             _weaponGyros.Clear();
@@ -92,16 +96,16 @@ namespace IngameScript
                 {
                     _turretGyros.Add(g);
                 }
-                if (g.CubeGrid == referenceGun.CubeGrid)
+                if (g.CubeGrid == referenceBlock.CubeGrid)
                     _weaponGyros.Add(g);
             }
-            turretFrontVec = referenceGun.WorldMatrix.Forward;
+            turretFrontVec = referenceBlock.WorldMatrix.Forward;
             if (_firstUpdate)
             {
                 _firstUpdate = false;
                 lastRotorAMatrix = newRotorA.WorldMatrix;
                 lastRotorEMatrix = MainElRotor.WorldMatrix;
-                lastWeaponMatrix = MyMath.CreateLookAtForwardDir(referenceGun.GetPosition(), turretFrontVec, rotorA.WorldMatrix.Up);
+                lastWeaponMatrix = MyMath.CreateLookAtForwardDir(referenceBlock.GetPosition(), turretFrontVec, rotorA.WorldMatrix.Up);
                 lastTurretMatrix = MyMath.CreateLookAtUpDir(rotorA.Top.WorldMatrix.Translation, turretFrontVec, rotorA.WorldMatrix.Up);
             }
             MultiplierElevation = 1;
@@ -125,11 +129,13 @@ namespace IngameScript
         public void Update(Vector3D interceptVector, bool autoAim = true, float az = 0, float el = 0, bool dir = true)
         {
             if (!dir)
-                interceptVector -= referenceGun.WorldMatrix.Translation;
+                interceptVector -= referenceBlock.WorldMatrix.Translation;
             //Матрицы башни и пушки
-            turretFrontVec = referenceGun.WorldMatrix.Forward;
-            MatrixD weaponMatrix = MyMath.CreateLookAtForwardDir(referenceGun.GetPosition(), turretFrontVec, rotorA.WorldMatrix.Up);
-            turretMatrix = MyMath.CreateLookAtUpDir(referenceGun.GetPosition(), turretFrontVec, rotorA.WorldMatrix.Up);
+            turretFrontVec = referenceBlock.WorldMatrix.Forward;
+            MatrixD weaponMatrix = MyMath.CreateLookAtForwardDir(referenceBlock.GetPosition(), turretFrontVec, rotorA.WorldMatrix.Up);
+            turretMatrix = MyMath.CreateLookAtUpDir(referenceBlock.GetPosition(), turretFrontVec, rotorA.WorldMatrix.Up);
+            if (block)
+                return;
             //Расчет стабилизационного момента от движения по местности
             float azError = (float)MyMath.CalculateRotorDeviationAngle(rotorA.WorldMatrix.Forward, lastRotorAMatrix);
             float elError = (float)MyMath.CalculateRotorDeviationAngle(MainElRotor.WorldMatrix.Forward, lastRotorEMatrix);
@@ -299,8 +305,32 @@ namespace IngameScript
             lastRotorAMatrix = rotorA.WorldMatrix;
             lastRotorEMatrix = MainElRotor.WorldMatrix;
         }
-        public void Update(float az, float el, bool stab = true)
+        public void Update(float az, float el, ref bool centering, float azAngle, float elAngle, bool stab = true)
         {
+            MatrixD weaponMatrix = MyMath.CreateLookAtForwardDir(referenceBlock.GetPosition(), turretFrontVec, rotorA.WorldMatrix.Up);
+            turretMatrix = MyMath.CreateLookAtUpDir(rotorA.Top.WorldMatrix.Translation, turretFrontVec, rotorA.WorldMatrix.Up);
+            turretFrontVec = referenceBlock.WorldMatrix.Forward;
+            if (block)
+                return;
+            if (centering)
+            {
+                fullDriveYaw = false; fullDrivePitch = false;
+                HullGuidance.DropGyro(_turretGyros);
+                HullGuidance.DropGyro(_weaponGyros);
+                if (az == 0 && el == 0)
+                {
+                    float elC = SetRotorAngle(MainElRotor, elAngle);
+                    SetRotorAngle(rotorA, azAngle);
+                    foreach (var rotor in rotorsE)
+                    {
+                        if (!rotor.Closed)
+                            SetSupprotRotor(rotor, turretFrontVec, elC);
+                    }
+                    return;
+                }
+                else
+                    centering = false;
+            }
             yawDeltaInput = 0; pitchDeltaInput = 0;
             firstRunAim = false;
             float azError = 0;
@@ -310,15 +340,12 @@ namespace IngameScript
                 azError = (float)MyMath.CalculateRotorDeviationAngle(rotorA.WorldMatrix.Forward, lastRotorAMatrix);
                 elError = (float)MyMath.CalculateRotorDeviationAngle(MainElRotor.WorldMatrix.Forward, lastRotorEMatrix);
             }
-            MatrixD weaponMatrix = MyMath.CreateLookAtForwardDir(referenceGun.GetPosition(), turretFrontVec, rotorA.WorldMatrix.Up);
-            turretMatrix = MyMath.CreateLookAtUpDir(rotorA.Top.WorldMatrix.Translation, turretFrontVec, rotorA.WorldMatrix.Up);
             double ownYaw, ownPitch;
             MyMath.CalculateYawVelocity(turretMatrix, lastTurretMatrix, out ownYaw);
             MyMath.CalculatePitchVelocity(weaponMatrix, lastWeaponMatrix, out ownPitch);
             double yawRotationInput = az;
             double pitchRotationInput = el;
             //turret rotors
-            turretFrontVec = referenceGun.WorldMatrix.Forward;
             float elevation = (float)(elError + pitchRotationInput);
             float azimuth = (float)(azError + yawRotationInput);
             MainElRotor.TargetVelocityRad = MultiplierElevation * elevation * 60;
@@ -410,6 +437,36 @@ namespace IngameScript
             lastRotorAMatrix = rotorA.WorldMatrix;
             lastRotorEMatrix = MainElRotor.WorldMatrix;
         }
+        public void Block(bool b)
+        {
+            block = b;
+            rotorA.RotorLock = b;
+            MainElRotor.RotorLock = b;
+            foreach (var r in rotorsE)
+            {
+                r.RotorLock = b;
+                if (b)
+                    r.TargetVelocityRad = 0;
+            }
+            if (b)
+            {
+                fullDriveYaw = false; fullDrivePitch = false;
+                HullGuidance.DropGyro(_turretGyros);
+                HullGuidance.DropGyro(_weaponGyros);
+                MainElRotor.TargetVelocityRad = 0;
+                rotorA.TargetVelocityRad = 0;
+                maneuvrabilityYaw = null;
+                maneuvrabilityPitch = null;
+                lastSpeedYaw = null; lastSpeedPitch = null;
+            }
+            else
+            {
+                lastRotorAMatrix = rotorA.WorldMatrix;
+                lastRotorEMatrix = MainElRotor.WorldMatrix;
+                lastWeaponMatrix = MyMath.CreateLookAtForwardDir(referenceBlock.GetPosition(), turretFrontVec, rotorA.WorldMatrix.Up);
+                lastTurretMatrix = MyMath.CreateLookAtUpDir(rotorA.Top.WorldMatrix.Translation, turretFrontVec, rotorA.WorldMatrix.Up);
+            }
+        }
 
         public void Status(ref string statusInfo, string language, string azimuthTag, string elevationTag)
         {
@@ -447,17 +504,6 @@ namespace IngameScript
             Vector3D GunVectorLoc = MyMath.VectorTransform(frontVec.GetValueOrDefault(), rotor.WorldMatrix.GetOrientation());
             double targetAngleLoc = Math.Atan2(-TargetVectorLoc.X, TargetVectorLoc.Z);
             double myAngleLoc = Math.Atan2(-GunVectorLoc.X, GunVectorLoc.Z);
-            //выясняем, сонаправлены ли в данный момент пушка с главной относительно азимутального ротора - устарело, есть механизм покруче
-            /*Vector2D proectionDir = new Vector2D(TargetVectorLoc.X, TargetVectorLoc.Z);
-			Vector2D proectionLoc = new Vector2D(GunVectorLoc.X, GunVectorLoc.Z);
-			if (Vector2D.Dot(proectionLoc, proectionDir) < 0)
-			{
-				deltaEl += MathHelper.Pi;
-				localMultiplierElevation = -localMultiplierElevation;
-			}
-			
-			float Elevation =  (float)(Math.Asin(TargetVectorLoc.Y / TargetVectorLoc.Length()) - Math.Asin(GunVectorLoc.Y / GunVectorLoc.Length()) + deltaEl + localMultiplierElevation * mainRotTurnSpeed);
-			*/
             float Elevation = (float)(0.1 * (targetAngleLoc - myAngleLoc) + localMultiplierElevation * mainRotTurnSpeed);
             rotor.TargetVelocityRad = Elevation * 60;
             return true;
@@ -476,24 +522,26 @@ namespace IngameScript
                 float rotorVelocity = PROPGAIN * angleDiff;
                 rotor.TargetVelocityRPM = rotorVelocity;
             }
-        }
-        static void SetRotorAngle(IMyMotorStator rotor, float targetAngle)
+        }*/
+        static float SetRotorAngle(IMyMotorStator rotor, float degreeAngle)
         {
             if (!rotor.Closed)
             {
+                float radAngle = (float)(degreeAngle / 180 * MathHelper.Pi);
                 float currAngle = rotor.Angle;
-                float angleDiff = targetAngle - currAngle;
+                float angleDiff = radAngle - currAngle;
 
                 angleDiff %= MathHelper.TwoPi;
                 if (angleDiff > MathHelper.Pi)
                     angleDiff = -MathHelper.TwoPi + angleDiff;
                 else if (angleDiff < -MathHelper.Pi)
                     angleDiff = MathHelper.TwoPi + angleDiff;
-
-                float rotorVelocity = PROPGAIN * angleDiff;
-                rotor.TargetVelocityRPM = rotorVelocity;
+                float Elevation = (float)(0.1 * angleDiff);
+                rotor.TargetVelocityRad = Elevation * 30;
+                return Elevation;
             }
-        }*/
+            return 0;
+        }
 
     }
 }
