@@ -37,9 +37,10 @@ namespace IngameScript
         Vector3D turretFrontVec;
         Vector3D lastInterceptVector;
         float MultiplierElevation;
-        float deltaAzimuth;
-        public IMyTerminalBlock referenceBlock;
+        public IMyTerminalBlock referenceBlock = null;
+        IMyTerminalBlock mainReference;
         public MatrixD turretMatrix { get; private set; }
+        MatrixD weaponMatrix;
         MatrixD lastWeaponMatrix;
         MatrixD lastTurretMatrix;
         MatrixD lastRotorAMatrix;
@@ -73,20 +74,7 @@ namespace IngameScript
             rotorsE = newRotorsE;
             rotorsE.Remove(mainElRotor);
             weapons = newWeapons;
-            referenceBlock = null;
-            foreach (var weapon in weapons)
-            {
-                if (weapon.CubeGrid == MainElRotor.TopGrid)
-                {
-                    referenceBlock = weapon;
-                    break;
-                }
-            }
-            if (referenceBlock == null)
-            {
-                referenceBlock = cameras[0];
-            }
-            if (referenceBlock == null)
+            if (!CheckRefBlock())
                 return false;
             _turretGyros.Clear();
             _weaponGyros.Clear();
@@ -123,7 +111,7 @@ namespace IngameScript
                 deltaAzimuthCos = 1;
             if (deltaAzimuthCos < -1)
                 deltaAzimuthCos = -1;
-            deltaAzimuth = (float)Math.Acos(deltaAzimuthCos);
+            //deltaAzimuth = (float)Math.Acos(deltaAzimuthCos);
             return true;
         }
         public void Update(Vector3D interceptVector, bool autoAim = true, float az = 0, float el = 0, bool dir = true)
@@ -132,7 +120,7 @@ namespace IngameScript
                 interceptVector -= referenceBlock.WorldMatrix.Translation;
             //Матрицы башни и пушки
             turretFrontVec = referenceBlock.WorldMatrix.Forward;
-            MatrixD weaponMatrix = MyMath.CreateLookAtForwardDir(referenceBlock.GetPosition(), turretFrontVec, rotorA.WorldMatrix.Up);
+            weaponMatrix = MyMath.CreateLookAtForwardDir(referenceBlock.GetPosition(), turretFrontVec, rotorA.WorldMatrix.Up);
             turretMatrix = MyMath.CreateLookAtUpDir(referenceBlock.GetPosition(), turretFrontVec, rotorA.WorldMatrix.Up);
             if (block)
                 return;
@@ -298,16 +286,11 @@ namespace IngameScript
             HullGuidance.ApplyGyroOverride(-pitchGyroSpeed * 60, yawGyroSpeed * 60, 0, _weaponGyros, turretMatrix);
             //update info
             lastInterceptVector = interceptVector;
-            lastSpeedYaw = ownYaw;
-            lastSpeedPitch = ownPitch;
-            lastTurretMatrix = turretMatrix;
-            lastWeaponMatrix = weaponMatrix;
-            lastRotorAMatrix = rotorA.WorldMatrix;
-            lastRotorEMatrix = MainElRotor.WorldMatrix;
+            LastMatrix(ownYaw, ownPitch);
         }
         public void Update(float az, float el, ref bool centering, float azAngle, float elAngle, bool stab = true)
         {
-            MatrixD weaponMatrix = MyMath.CreateLookAtForwardDir(referenceBlock.GetPosition(), turretFrontVec, rotorA.WorldMatrix.Up);
+            weaponMatrix = MyMath.CreateLookAtForwardDir(referenceBlock.GetPosition(), turretFrontVec, rotorA.WorldMatrix.Up);
             turretMatrix = MyMath.CreateLookAtUpDir(rotorA.Top.WorldMatrix.Translation, turretFrontVec, rotorA.WorldMatrix.Up);
             turretFrontVec = referenceBlock.WorldMatrix.Forward;
             if (block)
@@ -358,7 +341,8 @@ namespace IngameScript
             double yawSpeed = 0, pitchSpeed = 0;
             //turret gyros
             //calculate maneuvrability
-
+            azimuth -= azError;
+            elevation -= elError;
             //YAW
             if (fullDriveYaw)
             {
@@ -430,6 +414,10 @@ namespace IngameScript
             HullGuidance.ApplyGyroOverride(0, yawSpeed * 60, 0, _turretGyros, turretMatrix);
             //weapon gyro
             HullGuidance.ApplyGyroOverride(-pitchSpeed * 60, yawSpeed * 60, 0, _weaponGyros, turretMatrix);
+            LastMatrix(ownYaw, ownPitch);
+        }
+        void LastMatrix(double ownYaw, double ownPitch)
+        {
             lastSpeedYaw = ownYaw;
             lastSpeedPitch = ownPitch;
             lastTurretMatrix = turretMatrix;
@@ -470,7 +458,7 @@ namespace IngameScript
 
         public void Status(ref string statusInfo, string language, string azimuthTag, string elevationTag)
         {
-            statusInfo += $"\n{Languages.Translate(language, "ROTOR")} \"{azimuthTag}\": {rotorA.CustomName}\n " +
+            statusInfo += $"\n{Languages.Translate(language, "ROTOR")} \"{azimuthTag}\": {rotorA.CustomName}\n" +
                 $"{Languages.Translate(language, "MAINEROTOR")} \"{elevationTag}\": {MainElRotor.CustomName}\n" +
                 $"{Languages.Translate(language, "ALLROTORS")}: {rotorsE.Count + 1}\n" +
                 $"{Languages.Translate(language, "ALLWEAPONS")}: {weapons.Count}\n";
@@ -508,6 +496,20 @@ namespace IngameScript
             rotor.TargetVelocityRad = Elevation * 60;
             return true;
         }
+        public bool TrySetRef(IMyTerminalBlock reference)
+        {
+            if (weapons.Contains(reference))
+            {
+                referenceBlock = reference;
+                return true;
+            }
+            if (radarCameras.Contains(reference))
+            {
+                referenceBlock = reference;
+                return true;
+            }
+            return false;
+        }
 
         /*static void TurnRotor(IMyMotorStator rotor, float angleDiff)
         {
@@ -541,6 +543,32 @@ namespace IngameScript
                 return Elevation;
             }
             return 0;
+        }
+        bool CheckRefBlock()
+        {
+            if (referenceBlock == null)
+                return FindRefBlock();
+            if (referenceBlock.Closed)
+                return FindRefBlock();
+            return false;
+        }
+        bool FindRefBlock()
+        {
+            foreach (var weapon in weapons)
+            {
+                if (weapon.CubeGrid == MainElRotor.TopGrid)
+                {
+                    referenceBlock = weapon;
+                    break;
+                }
+            }
+            if (referenceBlock == null)
+            {
+                referenceBlock = radarCameras[0];
+            }
+            if (referenceBlock == null)
+                return false;
+            return true;
         }
 
     }

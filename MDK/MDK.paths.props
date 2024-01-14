@@ -8,7 +8,7 @@
     <MDKVersion>1.4.14</MDKVersion>
     <MDKUseGameBinPath>no</MDKUseGameBinPath>
     <MDKGameBinPath>D:\SteamLibrary\SteamApps\common\SpaceEngineers\Bin64</MDKGameBinPath>
-    <MDKInstallPath>c:\users\yegor\appdata\local\microsoft\visualstudio\17.0_8f8f687c\extensions\qavap4v5.xs1</MDKInstallPath>
+    <MDKInstallPath>c:\users\yegor\appdata\local\microsoft\visualstudio\17.0_1dbf449d\extensions\rbpbdala.wkc</MDKInstallPath>
     <MDKOutputPath>C:\Users\yegor\AppData\Roaming\SpaceEngineers\IngameScripts\local</MDKOutputPath>
   </PropertyGroup>
   <ItemGroup>
