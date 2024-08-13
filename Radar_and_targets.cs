@@ -60,11 +60,11 @@ namespace IngameScript
 					lockedtarget.PowerSubsystems = newInfo.PowerSubsystems;
 					lockedtarget.PropSubsystems = newInfo.PropSubsystems;
 					lockedtarget.WeaponSubsystems = newInfo.WeaponSubsystems;
-                    return true;
+					return true;
 				}
-            return false;
+			return false;
 		}
-        public bool TryLock(long tick, double InitialRange = 2000)
+		public bool TryLock(long tick, double InitialRange = 2000)
 		{
 			MyDetectedEntityInfo newDetectedInfo;
 			long TickPassed = tick - lastRadarLockTick;
@@ -83,20 +83,20 @@ namespace IngameScript
 							if ((newDetectedInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Enemies) && enemy
 								|| (newDetectedInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral) && neutral
 								|| (newDetectedInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership) && neutral
-                                || (newDetectedInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Friends) && allie
+								|| (newDetectedInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Friends) && allie
 								|| (newDetectedInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Owner) && allie)
 							{
 								lockedtarget = new EnemyTargetedInfo(tick, newDetectedInfo, lockcam.WorldMatrix.Forward);
 								lastRadarLockTick = tick;
 								counter = 0;
-                                pointOfLock = null;
-                            }
-                            else
-                                pointOfLock = newDetectedInfo.HitPosition;
-                        }
+								pointOfLock = null;
+							}
+							else
+								pointOfLock = newDetectedInfo.HitPosition;
+						}
 						else
 							pointOfLock = newDetectedInfo.HitPosition;
-                    }
+					}
 				}
 			}
 			return true;
@@ -138,9 +138,9 @@ namespace IngameScript
 								goto UpdateInfo;
 							if(counter > unlockTime * NEWTARGET)
 								if(CheckForNewTarget(DetectedEntity, tick, c.WorldMatrix.Forward))
-                                    goto UpdateInfo;
+									goto UpdateInfo;
 
-                        }
+						}
 						if (lockedtarget.TargetedPoint != null)													                //Если не вышло - в точку в которую хотим попасть
 						{
 							point = lockedtarget.inBodyPointPosition.GetValueOrDefault() + shift;
@@ -150,11 +150,11 @@ namespace IngameScript
 							if (DetectedEntity.EntityId == lockedtarget.EntityId)
 							{
 								goto UpdateInfo;
-                            }
-                            if (counter > unlockTime * NEWTARGET)
-                                if (CheckForNewTarget(DetectedEntity, tick, c.WorldMatrix.Forward))
-                                    goto UpdateInfo;
-                        }
+							}
+							if (counter > unlockTime * NEWTARGET)
+								if (CheckForNewTarget(DetectedEntity, tick, c.WorldMatrix.Forward))
+									goto UpdateInfo;
+						}
 						point = lockedtarget.Position + shift;																	//Если не вышло - в центр структуры
 						dir = point - camPos;
 						locDir = Vector3D.TransformNormal(dir, MatrixD.Transpose(c.WorldMatrix));
@@ -162,10 +162,10 @@ namespace IngameScript
 
 						if (DetectedEntity.EntityId == lockedtarget.EntityId)
 							goto UpdateInfo;
-                        if (counter > unlockTime * NEWTARGET)
-                            if (CheckForNewTarget(DetectedEntity, tick, c.WorldMatrix.Forward))
-                                goto UpdateInfo;
-                    }
+						if (counter > unlockTime * NEWTARGET)
+							if (CheckForNewTarget(DetectedEntity, tick, c.WorldMatrix.Forward))
+								goto UpdateInfo;
+					}
 					else
 						return false;
 					UpdateInfo:
@@ -193,22 +193,22 @@ namespace IngameScript
 			Searching = true;
 			lockedtarget = target;
 			lastRadarLockTick = tick;
-        }
+		}
 		bool CheckForNewTarget(MyDetectedEntityInfo newEntity, long tick, Vector3D viewvec)
 		{
-            if (newEntity.Type == MyDetectedEntityType.SmallGrid || newEntity.Type == MyDetectedEntityType.LargeGrid)
-                if ((newEntity.Relationship == MyRelationsBetweenPlayerAndBlock.Enemies) && enemy
-                    || (newEntity.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral) && neutral
-                    || (newEntity.Relationship == MyRelationsBetweenPlayerAndBlock.Friends) && allie
-                    || (newEntity.Relationship == MyRelationsBetweenPlayerAndBlock.Owner) && allie)
-                {
-                    lockedtarget = new EnemyTargetedInfo(tick, newEntity, viewvec);
-                    lastRadarLockTick = tick;
-                    counter = 0;
+			if (newEntity.Type == MyDetectedEntityType.SmallGrid || newEntity.Type == MyDetectedEntityType.LargeGrid)
+				if ((newEntity.Relationship == MyRelationsBetweenPlayerAndBlock.Enemies) && enemy
+					|| (newEntity.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral) && neutral
+					|| (newEntity.Relationship == MyRelationsBetweenPlayerAndBlock.Friends) && allie
+					|| (newEntity.Relationship == MyRelationsBetweenPlayerAndBlock.Owner) && allie)
+				{
+					lockedtarget = new EnemyTargetedInfo(tick, newEntity, viewvec);
+					lastRadarLockTick = tick;
+					counter = 0;
 					return true;
-                }
+				}
 			return false;
-        }
+		}
 		public void DropLock()
 		{
 			pointOfLock = null;

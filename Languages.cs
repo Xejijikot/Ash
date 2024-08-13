@@ -95,8 +95,8 @@ namespace IngameScript
 			"MAINEROTOR=Main elevation rotor\n" +
 			"ALLROTORS=Total elevation rotors\n" +
 			"ALLWEAPONS=Total weapons\n" +
-            "WEAPON=Weapon\n" +
-            "CUSTOM=Custom settings\n" +
+			"WEAPON=Weapon\n" +
+			"CUSTOM=Custom settings\n" +
 			"GATLING=Gatling\n" +
 			"AUTOCANON=Autocanon\n" +
 			"ASSAULT=Assault canon\n" +

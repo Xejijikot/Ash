@@ -40,7 +40,7 @@ namespace IngameScript
 			if (targetingPoint == 2)
 				if(Target.HitPosition != null)
 					target = Target.HitPosition.GetValueOrDefault();
-            Vector3D targetDirection = target - myPos;
+			Vector3D targetDirection = target - myPos;
 			double speed = projectileSpeed;
 			double correctedSpeed = speed;
 			Vector3D sumspeed = Target.Velocity - MySpeed;
@@ -50,42 +50,42 @@ namespace IngameScript
 				FindGravityCorrection_DirectFire(speed, ref correctedSpeed, InterceptVector, gravity);
 				InterceptVector = FindInterceptVector(myPos, correctedSpeed, target, sumspeed);
 			}
-            double timeToHit = InterceptVector.Length()/correctedSpeed;
+			double timeToHit = InterceptVector.Length()/correctedSpeed;
 			Vector3D yVector = -gravity * timeToHit * timeToHit / 2;
-            InterceptVector = InterceptVector + yVector;
+			InterceptVector = InterceptVector + yVector;
 			if (dir)
 				return InterceptVector;
 			else return InterceptVector + myPos;
 		}
 		public static Vector3D FindBallisticPoint(Vector3D myPos, Vector3D mySpeed, EnemyTargetedInfo Target, Vector3D grav, Vector3D projectileSpeed, int targetingPoint = 0)
 		{
-            Vector3D target = Target.Position;
-            if (targetingPoint == 0)
-                if (Target.TargetedPoint != null)
-                    target = Target.TargetedPoint.GetValueOrDefault();
-            if (targetingPoint == 2)
-                if (Target.HitPosition != null)
-                    target = Target.HitPosition.GetValueOrDefault();
-            Vector3D sumSpeed = mySpeed + projectileSpeed - Target.Velocity;
+			Vector3D target = Target.Position;
+			if (targetingPoint == 0)
+				if (Target.TargetedPoint != null)
+					target = Target.TargetedPoint.GetValueOrDefault();
+			if (targetingPoint == 2)
+				if (Target.HitPosition != null)
+					target = Target.HitPosition.GetValueOrDefault();
+			Vector3D sumSpeed = mySpeed + projectileSpeed - Target.Velocity;
 			Vector3D dirToTarget = target - myPos;
 			double distanceToTarget = dirToTarget.Length();
-            double projectileSumSpeed = sumSpeed.Length();
+			double projectileSumSpeed = sumSpeed.Length();
 			double timeToImpact = distanceToTarget / projectileSumSpeed;
 			Vector3D BallisticPoint = myPos + sumSpeed * timeToImpact + grav * timeToImpact * timeToImpact / 2;
-            return BallisticPoint;
-        }
-        public static Vector3D FindBallisticPoint(Vector3D myPos, Vector3D mySpeed, Vector3D Target, Vector3D grav, Vector3D projectileSpeed)
-        {
+			return BallisticPoint;
+		}
+		public static Vector3D FindBallisticPoint(Vector3D myPos, Vector3D mySpeed, Vector3D Target, Vector3D grav, Vector3D projectileSpeed)
+		{
 
-            Vector3D sumSpeed = mySpeed + projectileSpeed;
-            Vector3D dirToTarget = Target - myPos;
-            double distanceToTarget = dirToTarget.Length();
-            double projectileSumSpeed = sumSpeed.Length();
-            double timeToImpact = distanceToTarget / projectileSumSpeed;
-            Vector3D BallisticPoint = myPos + sumSpeed * timeToImpact + grav * timeToImpact * timeToImpact / 2;
-            return BallisticPoint;
-        }
-        static void FindGravityCorrection_DirectFire(double speed, ref double x, Vector3D targetDir, Vector3D grav)
+			Vector3D sumSpeed = mySpeed + projectileSpeed;
+			Vector3D dirToTarget = Target - myPos;
+			double distanceToTarget = dirToTarget.Length();
+			double projectileSumSpeed = sumSpeed.Length();
+			double timeToImpact = distanceToTarget / projectileSumSpeed;
+			Vector3D BallisticPoint = myPos + sumSpeed * timeToImpact + grav * timeToImpact * timeToImpact / 2;
+			return BallisticPoint;
+		}
+		static void FindGravityCorrection_DirectFire(double speed, ref double x, Vector3D targetDir, Vector3D grav)
 		{
 			double distanceToTarget = targetDir.Length();
 			double angleCos = grav.Dot(targetDir) / (grav.Length() * targetDir.Length());
@@ -115,76 +115,76 @@ namespace IngameScript
 							x = x2.GetValueOrDefault();
 				}
 		}
-        public static MatrixD CreateLookAtForwardDir(Vector3D cameraPosition, Vector3D cameraForwardVector, Vector3D suggestedUp)
-        {
-            Vector3D up = Vector3D.Cross(Vector3D.Cross(cameraForwardVector, suggestedUp), cameraForwardVector);
-            Vector3D vector3D = Vector3D.Normalize(- cameraForwardVector);
-            Vector3D vector3D2 = Vector3D.Normalize(Vector3D.Cross(up, vector3D));
-            Vector3D vector = Vector3D.Cross(vector3D, vector3D2);
-            MatrixD result = default(MatrixD);
-            result.M11 = vector3D2.X;
-            result.M12 = vector3D2.Y;
-            result.M13 = vector3D2.Z;
-            result.M14 = 0.0;
-            result.M21 = vector.X;
-            result.M22 = vector.Y;
-            result.M23 = vector.Z;
-            result.M24 = 0.0;
-            result.M31 = vector3D.X;
-            result.M32 = vector3D.Y;
-            result.M33 = vector3D.Z;
-            result.M34 = 0.0;
-            result.M41 = cameraPosition.X;
-            result.M42 = cameraPosition.Y;
-            result.M43 = cameraPosition.Z;
-            result.M44 = 1.0;
-            return result;
-        }
-        public static MatrixD CreateLookAtUpDir(Vector3D cameraPosition, Vector3D suggestedForward, Vector3D cameraUpVector)
-        {
-            Vector3D cameraForwardVector = Vector3D.Cross(Vector3D.Cross(cameraUpVector, suggestedForward), cameraUpVector);
-            Vector3D vector3D = Vector3D.Normalize(-cameraForwardVector);
-            Vector3D vector3D2 = Vector3D.Normalize(Vector3D.Cross(cameraUpVector, vector3D));
-            Vector3D vector = Vector3D.Cross(vector3D, vector3D2);
-            MatrixD result = default(MatrixD);
-            result.M11 = vector3D2.X;
-            result.M12 = vector3D2.Y;
-            result.M13 = vector3D2.Z;
-            result.M14 = 0.0;
-            result.M21 = vector.X;
-            result.M22 = vector.Y;
-            result.M23 = vector.Z;
-            result.M24 = 0.0;
-            result.M31 = vector3D.X;
-            result.M32 = vector3D.Y;
-            result.M33 = vector3D.Z;
-            result.M34 = 0.0;
-            result.M41 = cameraPosition.X;
-            result.M42 = cameraPosition.Y;
-            result.M43 = cameraPosition.Z;
-            result.M44 = 1.0;
-            return result;
-        }
+		public static MatrixD CreateLookAtForwardDir(Vector3D cameraPosition, Vector3D cameraForwardVector, Vector3D suggestedUp)
+		{
+			Vector3D up = Vector3D.Cross(Vector3D.Cross(cameraForwardVector, suggestedUp), cameraForwardVector);
+			Vector3D vector3D = Vector3D.Normalize(- cameraForwardVector);
+			Vector3D vector3D2 = Vector3D.Normalize(Vector3D.Cross(up, vector3D));
+			Vector3D vector = Vector3D.Cross(vector3D, vector3D2);
+			MatrixD result = default(MatrixD);
+			result.M11 = vector3D2.X;
+			result.M12 = vector3D2.Y;
+			result.M13 = vector3D2.Z;
+			result.M14 = 0.0;
+			result.M21 = vector.X;
+			result.M22 = vector.Y;
+			result.M23 = vector.Z;
+			result.M24 = 0.0;
+			result.M31 = vector3D.X;
+			result.M32 = vector3D.Y;
+			result.M33 = vector3D.Z;
+			result.M34 = 0.0;
+			result.M41 = cameraPosition.X;
+			result.M42 = cameraPosition.Y;
+			result.M43 = cameraPosition.Z;
+			result.M44 = 1.0;
+			return result;
+		}
+		public static MatrixD CreateLookAtUpDir(Vector3D cameraPosition, Vector3D suggestedForward, Vector3D cameraUpVector)
+		{
+			Vector3D cameraForwardVector = Vector3D.Cross(Vector3D.Cross(cameraUpVector, suggestedForward), cameraUpVector);
+			Vector3D vector3D = Vector3D.Normalize(-cameraForwardVector);
+			Vector3D vector3D2 = Vector3D.Normalize(Vector3D.Cross(cameraUpVector, vector3D));
+			Vector3D vector = Vector3D.Cross(vector3D, vector3D2);
+			MatrixD result = default(MatrixD);
+			result.M11 = vector3D2.X;
+			result.M12 = vector3D2.Y;
+			result.M13 = vector3D2.Z;
+			result.M14 = 0.0;
+			result.M21 = vector.X;
+			result.M22 = vector.Y;
+			result.M23 = vector.Z;
+			result.M24 = 0.0;
+			result.M31 = vector3D.X;
+			result.M32 = vector3D.Y;
+			result.M33 = vector3D.Z;
+			result.M34 = 0.0;
+			result.M41 = cameraPosition.X;
+			result.M42 = cameraPosition.Y;
+			result.M43 = cameraPosition.Z;
+			result.M44 = 1.0;
+			return result;
+		}
 
-        public static Vector3D FindInterceptVector(Vector3D shotOrigin, double shotVel, Vector3D targetOrigin, Vector3D targetVel)
+		public static Vector3D FindInterceptVector(Vector3D shotOrigin, double shotVel, Vector3D targetOrigin, Vector3D targetVel)
 		{
 			Vector3D toTarget = targetOrigin - shotOrigin;
-            Vector3D dirToTarget = Vector3D.Normalize(toTarget);
-            Vector3D targetVelOrth = Vector3D.Dot(targetVel, dirToTarget) * dirToTarget;
-            Vector3D targetVelTang = targetVel - targetVelOrth;
-            Vector3D shotVelTang = targetVelTang;
-            double shotVelSpeed = shotVelTang.Length();
+			Vector3D dirToTarget = Vector3D.Normalize(toTarget);
+			Vector3D targetVelOrth = Vector3D.Dot(targetVel, dirToTarget) * dirToTarget;
+			Vector3D targetVelTang = targetVel - targetVelOrth;
+			Vector3D shotVelTang = targetVelTang;
+			double shotVelSpeed = shotVelTang.Length();
 
-            if (shotVelSpeed > shotVel)
+			if (shotVelSpeed > shotVel)
 			{
-                return Vector3D.Normalize(targetVel) * shotVel;
+				return Vector3D.Normalize(targetVel) * shotVel;
 			}
 			else
 			{
 				double shotSpeedOrth = Math.Sqrt(shotVel * shotVel - shotVelSpeed * shotVelSpeed);
 				Vector3D shotVelOrth = dirToTarget * shotSpeedOrth;
 				double timeToHit = toTarget.Length() / (targetVelOrth - shotVelOrth).Length();
-                return (shotVelOrth + shotVelTang).Normalized() * (timeToHit * shotVel);
+				return (shotVelOrth + shotVelTang).Normalized() * (timeToHit * shotVel);
 			}
 		}
 		public static void QuadraticEquation(double a, double b, double c, out double? x1, out double? x2)
@@ -220,57 +220,57 @@ namespace IngameScript
 			else
 				return MathHelper.Clamp(a.Dot(b) / Math.Sqrt(a.LengthSquared() * b.LengthSquared()), -1, 1);
 		}
-        public static double CalculateRotorDeviationAngle(Vector3D forwardVector, MatrixD lastOrientation)
-        {
-            var flattenedForwardVector = VectorRejection(forwardVector, lastOrientation.Up);
-            return VectorAngleBetween(flattenedForwardVector, lastOrientation.Forward) * Math.Sign(flattenedForwardVector.Dot(lastOrientation.Left));
-        }
-        public static void CalculateYawVelocity(MatrixD turretMatrix, MatrixD turretLastMatrix, out double speed)
-        {
-            Vector3D now = turretMatrix.Forward;
-            var flattenedForwardVector = VectorRejection(now, turretLastMatrix.Up);
-            speed = - VectorAngleBetween(flattenedForwardVector, turretLastMatrix.Forward) * Math.Sign(flattenedForwardVector.Dot(turretLastMatrix.Left));
-        }
-        public static void CalculatePitchVelocity(MatrixD weaponMatrix, MatrixD weaponLastMatrix, out double speed)
-        {
-            Vector3D now = weaponMatrix.Forward;
-            var flattenedForwardVector = VectorRejection(now, weaponLastMatrix.Right);
-            speed = - VectorAngleBetween(flattenedForwardVector, weaponLastMatrix.Forward) * Math.Sign(flattenedForwardVector.Dot(weaponLastMatrix.Down));
-        }
-        public static Vector3D VectorProjection(Vector3D a, Vector3D b)
-        {
-            return a.Dot(b) / b.LengthSquared() * b;
-        }
-        public static Vector3D VectorRejection(Vector3D a, Vector3D b) //reject a on b    
-        {
-            if (Vector3D.IsZero(b))
-                return Vector3D.Zero;
+		public static double CalculateRotorDeviationAngle(Vector3D forwardVector, MatrixD lastOrientation)
+		{
+			var flattenedForwardVector = VectorRejection(forwardVector, lastOrientation.Up);
+			return VectorAngleBetween(flattenedForwardVector, lastOrientation.Forward) * Math.Sign(flattenedForwardVector.Dot(lastOrientation.Left));
+		}
+		public static void CalculateYawVelocity(MatrixD turretMatrix, MatrixD turretLastMatrix, out double speed)
+		{
+			Vector3D now = turretMatrix.Forward;
+			var flattenedForwardVector = VectorRejection(now, turretLastMatrix.Up);
+			speed = - VectorAngleBetween(flattenedForwardVector, turretLastMatrix.Forward) * Math.Sign(flattenedForwardVector.Dot(turretLastMatrix.Left));
+		}
+		public static void CalculatePitchVelocity(MatrixD weaponMatrix, MatrixD weaponLastMatrix, out double speed)
+		{
+			Vector3D now = weaponMatrix.Forward;
+			var flattenedForwardVector = VectorRejection(now, weaponLastMatrix.Right);
+			speed = - VectorAngleBetween(flattenedForwardVector, weaponLastMatrix.Forward) * Math.Sign(flattenedForwardVector.Dot(weaponLastMatrix.Down));
+		}
+		public static Vector3D VectorProjection(Vector3D a, Vector3D b)
+		{
+			return a.Dot(b) / b.LengthSquared() * b;
+		}
+		public static Vector3D VectorRejection(Vector3D a, Vector3D b) //reject a on b    
+		{
+			if (Vector3D.IsZero(b))
+				return Vector3D.Zero;
 
-            return a - a.Dot(b) / b.LengthSquared() * b;
-        }
+			return a - a.Dot(b) / b.LengthSquared() * b;
+		}
 
-        public static double VectorAngleBetween(Vector3D a, Vector3D b) //returns radians 
-        {
-            if (Vector3D.IsZero(a) || Vector3D.IsZero(b))
-                return 0;
-            else
-                return Math.Acos(MathHelper.Clamp(a.Dot(b) / Math.Sqrt(a.LengthSquared() * b.LengthSquared()), -1, 1));
-        }
-        public static double Vector2AngleBetween(Vector2D a, Vector2D b) //returns radians 
-        {
-            if (a.Length() == 0 || b.Length() == 0)
-                return 0;
-            else
-                return Math.Acos(MathHelper.Clamp(Vector2D.Dot(a, b) / Math.Sqrt(a.LengthSquared() * b.LengthSquared()), -1, 1));
-        }
-        public static double Vector2DeviationFromZero(Vector2D a) //returns radians 
-        {
-            if (a.Length() == 0)
-                return 0;
+		public static double VectorAngleBetween(Vector3D a, Vector3D b) //returns radians 
+		{
+			if (Vector3D.IsZero(a) || Vector3D.IsZero(b))
+				return 0;
+			else
+				return Math.Acos(MathHelper.Clamp(a.Dot(b) / Math.Sqrt(a.LengthSquared() * b.LengthSquared()), -1, 1));
+		}
+		public static double Vector2AngleBetween(Vector2D a, Vector2D b) //returns radians 
+		{
+			if (a.Length() == 0 || b.Length() == 0)
+				return 0;
+			else
+				return Math.Acos(MathHelper.Clamp(Vector2D.Dot(a, b) / Math.Sqrt(a.LengthSquared() * b.LengthSquared()), -1, 1));
+		}
+		public static double Vector2DeviationFromZero(Vector2D a) //returns radians 
+		{
+			if (a.Length() == 0)
+				return 0;
 			Vector2D b = new Vector2D(1, 0);
 			return Math.Acos(MathHelper.Clamp(Vector2D.Dot(a, b) / Math.Sqrt(a.LengthSquared() * b.LengthSquared()), -1, 1));
-        }
-    }
+		}
+	}
 	
 
 }

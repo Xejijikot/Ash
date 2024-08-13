@@ -35,17 +35,17 @@ namespace IngameScript
 		public MatrixD Orientation;
 		public long LastLockTick;
 		public List<TargetSubsystem> TargetSubsystems = new List<TargetSubsystem>();
-        public List<TargetSubsystem> PowerSubsystems = new List<TargetSubsystem>();
-        public List<TargetSubsystem> PropSubsystems = new List<TargetSubsystem>();
-        public List<TargetSubsystem> WeaponSubsystems = new List<TargetSubsystem>();
+		public List<TargetSubsystem> PowerSubsystems = new List<TargetSubsystem>();
+		public List<TargetSubsystem> PropSubsystems = new List<TargetSubsystem>();
+		public List<TargetSubsystem> WeaponSubsystems = new List<TargetSubsystem>();
 
-        public EnemyTargetedInfo(long tick, MyDetectedEntityInfo newentityInfo, Vector3D? dir = null)
+		public EnemyTargetedInfo(long tick, MyDetectedEntityInfo newentityInfo, Vector3D? dir = null)
 		{
-            EntityId = newentityInfo.EntityId;
+			EntityId = newentityInfo.EntityId;
 			Type = newentityInfo.Type;
 			HitPosition = newentityInfo.HitPosition;
 			Position = newentityInfo.Position;
-            if (HitPosition != null)
+			if (HitPosition != null)
 			{
 				TargetedPoint = HitPosition;
 				DeltaPosition = HitPosition.GetValueOrDefault() - Position;
@@ -58,7 +58,7 @@ namespace IngameScript
 				if (dir != null)
 					TargetedPoint += dir / dir.GetValueOrDefault().Length() * 0.5;
 
-            }
+			}
 			Velocity = newentityInfo.Velocity;
 			Acceleration = null;
 			LastLockTick = tick;
@@ -76,18 +76,18 @@ namespace IngameScript
 				if (TargetedPoint == null)
 				{
 					TargetedPoint = HitPosition;
-                    if (dir != null)
-                        TargetedPoint += dir / dir.GetValueOrDefault().Length() * 0.5;
-                    Vector3D worldDirection = TargetedPoint.GetValueOrDefault() - Position;
-                    inBodyPointPosition = Vector3D.TransformNormal(worldDirection, MatrixD.Transpose(Orientation));
+					if (dir != null)
+						TargetedPoint += dir / dir.GetValueOrDefault().Length() * 0.5;
+					Vector3D worldDirection = TargetedPoint.GetValueOrDefault() - Position;
+					inBodyPointPosition = Vector3D.TransformNormal(worldDirection, MatrixD.Transpose(Orientation));
 				}
 			}
 			else DeltaPosition = null;
 			if (inBodyPointPosition != null)
 			{
 				Vector3D worldDirection = Vector3D.TransformNormal(inBodyPointPosition.GetValueOrDefault(), Orientation);
-                TargetedPoint = worldDirection + Position;
-            }
+				TargetedPoint = worldDirection + Position;
+			}
 			else TargetedPoint = null;
 			if (LastLockTick - tick > 60)
 				Acceleration = null;
@@ -96,9 +96,18 @@ namespace IngameScript
 			Velocity = newEntityInfo.Velocity;
 			LastLockTick = tick;
 		}
-		public bool AddSubsystem(Vector3D worldPosition, string type)
+		public bool AddSubsystem(long tick, Vector3D worldPosition, string type)
 		{
-			TargetSubsystem newSubsystem = new TargetSubsystem(worldPosition, this, type);
+			TargetSubsystem newSubsystem = new TargetSubsystem(tick, worldPosition, this, type);
+			return CheckSubsystem(tick, newSubsystem, type);
+		}
+		public bool AddSubsystem(long tick, MyDetectedEntityInfo newEntityInfo, string type)
+		{
+			TargetSubsystem newSubsystem = new TargetSubsystem(tick, newEntityInfo.HitPosition.GetValueOrDefault(), this, type);
+			return CheckSubsystem(tick, newSubsystem, type);
+		}
+		bool CheckSubsystem(long tick, TargetSubsystem newSubsystem, string type)
+		{
 			float size;
 			if (Type == MyDetectedEntityType.LargeGrid)
 				size = 2.5f;
@@ -106,62 +115,47 @@ namespace IngameScript
 				size = 0.5f;
 			else
 				return false;
-            foreach (var subsystem in TargetSubsystems)
+			foreach (var subsystem in TargetSubsystems)
 			{
 				Vector3D delta = subsystem.gridPosition - newSubsystem.gridPosition;
-				if (Math.Round(delta.Length() / size) == 0)
-					return false;
-            }
-            TargetSubsystems.Add(newSubsystem);
+				if (delta.Length() / size < 1)
+				{
+					if (subsystem.subsystemType == newSubsystem.subsystemType)
+					{
+						subsystem.lastUpdateTick = tick;
+						return true;
+					}
+					else
+						return false;
+				}
+			}
+			TargetSubsystems.Add(newSubsystem);
 			if (type == "Weapons")
 				WeaponSubsystems.Add(newSubsystem);
-			if(type == "Propulsion")
+			if (type == "Propulsion")
 				PropSubsystems.Add(newSubsystem);
-			if(type == "PowerSystems")
+			if (type == "PowerSystems")
 				PowerSubsystems.Add(newSubsystem);
-            return true;
-        }
-        public bool AddSubsystem(MyDetectedEntityInfo newEntityInfo, string type)
-        {
-            TargetSubsystem newSubsystem = new TargetSubsystem(newEntityInfo.HitPosition.GetValueOrDefault(), this, type);
-            float size;
-            if (Type == MyDetectedEntityType.LargeGrid)
-                size = 2.5f;
-            else if (Type == MyDetectedEntityType.SmallGrid)
-                size = 0.5f;
-            else
-                return false;
-            foreach (var subsystem in TargetSubsystems)
-            {
-                Vector3D delta = subsystem.gridPosition - newSubsystem.gridPosition;
-                if (delta.Length() / size < 1)
-                    return false;
-            }
-            TargetSubsystems.Add(newSubsystem);
-            if (type == "Weapons")
-                WeaponSubsystems.Add(newSubsystem);
-            if (type == "Propulsion")
-                PropSubsystems.Add(newSubsystem);
-            if (type == "PowerSystems")
-                PowerSubsystems.Add(newSubsystem);
-            return true;
-        }
-    }
-    public class TargetSubsystem
+			return true;
+		}
+	}
+	public class TargetSubsystem
 	{
+		public long lastUpdateTick;
 		public string subsystemType { get; }
-        public Vector3D gridPosition { get; }
-		public TargetSubsystem(Vector3D worldPosition, EnemyTargetedInfo Target, string type)
+		public Vector3D gridPosition { get; }
+		public TargetSubsystem(long tick, Vector3D worldPosition, EnemyTargetedInfo Target, string type)
 		{
-            subsystemType = type;
-            Vector3D worldDirection = worldPosition - Target.Position;
-            gridPosition = Vector3D.TransformNormal(worldDirection, MatrixD.Transpose(Target.Orientation));
-        }
+			lastUpdateTick = tick;
+			subsystemType = type;
+			Vector3D worldDirection = worldPosition - Target.Position;
+			gridPosition = Vector3D.TransformNormal(worldDirection, MatrixD.Transpose(Target.Orientation));
+		}
 		public Vector3D GetPosition(EnemyTargetedInfo Target)
 		{
-            Vector3D worldDirection = Vector3D.TransformNormal(gridPosition, Target.Orientation);
+			Vector3D worldDirection = Vector3D.TransformNormal(gridPosition, Target.Orientation);
 			Vector3D worldPosition = worldDirection + Target.Position;
 			return worldPosition;
-        }
+		}
 	}
 }
