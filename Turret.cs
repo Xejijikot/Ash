@@ -38,7 +38,6 @@ namespace IngameScript
 		Vector3D lastInterceptVector;
 		float MultiplierElevation;
 		public IMyTerminalBlock referenceBlock = null;
-		IMyTerminalBlock mainReference;
 		public MatrixD turretMatrix { get; private set; }
 		MatrixD weaponMatrix;
 		MatrixD lastWeaponMatrix;
