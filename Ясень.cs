@@ -41,7 +41,6 @@ namespace IngameScript
         const int timeToUpdateButtons = 5;
 
         string _updateInfo, _statusInfo, _debuginfo = "";
-        static MyIni languageIni = new MyIni();
 
         List<IMyTerminalBlock> _allBlocks = new List<IMyTerminalBlock>();
         List<IMyUserControllableGun> _allGuns = new List<IMyUserControllableGun>();
@@ -443,7 +442,6 @@ namespace IngameScript
                         else
                             Drawing.DrawTurretTarget(DI);
                     }
-                    _debugLCD.WriteText("4");
                     if (_radar.lockedtarget != null)
                     {
 
@@ -545,10 +543,6 @@ namespace IngameScript
             }
             //FindReferenceBlock
             if (_referenceBlock == null)
-            {
-                FindReferenceBlock();
-            }
-            if (_referenceBlock == null)
             isTurret = false;
             isVehicle = false;
 
@@ -568,7 +562,8 @@ namespace IngameScript
             _FCSGroup = GridTerminalSystem.GetBlockGroupWithName(_FCSTag);
             if (_FCSGroup == null)
             {
-                updateInfo += $"\n{languageIni.Get(_language, "GnF").ToString("Не найдена группа блоков!")}\n{languageIni.Get(_language, "NAME").ToString("Имя группы:")} \"{_FCSTag}\"\n";
+                updateInfo += $"\nGroup not Found!\n" +
+                    $"Group name: {_FCSTag}\n";
             }
             else
             {
@@ -811,7 +806,10 @@ namespace IngameScript
                     }
                 }
             }
-
+            if (_referenceBlock == null)
+            {
+                FindReferenceBlock();
+            }
             UpdateWeaponInfo();
             return true;
         }
@@ -842,7 +840,6 @@ namespace IngameScript
                 if (TryGetWeaponFromName(_myIniWeapon))
                     return;
             }
-            _debugLCD.WriteText($"{_allActiveCameras.Count}");
             if (isTurret)
             {
                 _referenceBlock = _turret.referenceBlock;
