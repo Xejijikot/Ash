@@ -59,7 +59,6 @@
     <Compile Include="BroadcastModule.cs" />
     <Compile Include="EnemyTargetedInfo.cs" />
     <Compile Include="HullGuidance.cs" />
-    <Compile Include="Languages.cs" />
     <Compile Include="MyMath.cs" />
     <Compile Include="Radar_and_targets.cs" />
     <Compile Include="Drawing.cs" />

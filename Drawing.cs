@@ -229,12 +229,13 @@ namespace IngameScript
 			DrawLogo(dI.c, Language, dI.frame, centerPos, 0.7f);
 			if (isTurret)
 			{
-				aiMode = Languages.Translate(Language, "TURRET");
-			}
+				aiMode = "Turret";
+
+            }
 			else if (isVeachle)
 			{
-				aiMode = Languages.Translate(Language, "HULL");
-			}
+				aiMode = "Hull";
+            }
 			DrawAiMode(dI.c, dI.frame, aiMode, rect.Center + modPos + (marker * mult), 0.7f);
 		}
 		static void LosingTarget(Color c, MySpriteDrawFrame frame, Vector2 centerPos, float percent, float scale = 1f)
@@ -296,7 +297,7 @@ namespace IngameScript
 		}
 		static void DrawLogo(Color c, string Language, MySpriteDrawFrame frame, Vector2 centerPos, float scale = 1f)
 		{
-			string scriptName = Languages.Translate(Language, "SCRIPT_NAME");
+			string scriptName = "FCS \"Ash\"";
 			frame.Add(new MySprite(0, "Triangle", new Vector2(145f, 17.5f) * scale + centerPos, new Vector2(50f, 42f) * scale, c, null, TextAlignment.CENTER, 3.1416f));
 			frame.Add(new MySprite(0, "SquareSimple", new Vector2(68f, 15f) * scale + centerPos, new Vector2(156f, 36f) * scale, c, null, TextAlignment.CENTER, 0f));
 			frame.Add(new MySprite(0, "Triangle", new Vector2(145f, 17.5f) * scale + centerPos, new Vector2(46f, 39f) * scale, _BLACK, null, TextAlignment.CENTER, 3.1416f));
@@ -313,31 +314,22 @@ namespace IngameScript
 		}
 		static void DrawLockedMode(Color c, string Language, MySpriteDrawFrame frame, Vector2 centerPos, bool autotarget, float scale = 1f)
 		{
-			string auto;
-			string aim;
 			if (autotarget)
 			{
-				aim = Languages.Translate(Language, "AIM");
-				auto = Languages.Translate(Language, "AUTO");
-				frame.Add(new MySprite(SpriteType.TEXT, aim, new Vector2(0f, 0f) * scale + centerPos, null, c, "DEBUG", TextAlignment.LEFT, 1f * scale));
-				frame.Add(new MySprite(SpriteType.TEXT, auto, new Vector2(-35f, 25f) * scale + centerPos, null, c, "DEBUG", TextAlignment.LEFT, 1f * scale));
+				frame.Add(new MySprite(SpriteType.TEXT, "Auto Aim", new Vector2(0f, 0f) * scale + centerPos, null, c, "DEBUG", TextAlignment.LEFT, 1f * scale));
 				frame.Add(new MySprite(0, "Circle", new Vector2(-11f, 15f) * scale + centerPos, new Vector2(7f, 7f) * scale, c, null, TextAlignment.CENTER, 0f));
 			}
 			else
 			{
-				aim = Languages.Translate(Language, "TRACKING");
-				auto = Languages.Translate(Language, "ASSIST");
-				frame.Add(new MySprite(SpriteType.TEXT, aim, new Vector2(0f, 0f) * scale + centerPos, null, c, "DEBUG", TextAlignment.LEFT, 1f * scale));
-				frame.Add(new MySprite(SpriteType.TEXT, auto, new Vector2(-5f, 25f) * scale + centerPos, null, c, "DEBUG", TextAlignment.LEFT, 1f * scale));
+				frame.Add(new MySprite(SpriteType.TEXT, "Aim Assist", new Vector2(0f, 0f) * scale + centerPos, null, c, "DEBUG", TextAlignment.LEFT, 1f * scale));
 				frame.Add(new MySprite(0, "Circle", new Vector2(-11f, 15f) * scale + centerPos, new Vector2(7f, 7f) * scale, c, null, TextAlignment.CENTER, 0f));
 			}
 		}
 		static void DrawWeaponInfo(Color c, string Language, DWI dwi, MySpriteDrawFrame frame, Vector2 centerPos, float scale = 1f)
 		{
-			string weapon = Languages.Translate(Language, "WEAPON") + ":";
 			string name = dwi.name;
-			string weapomType = Languages.Translate(Language, dwi.weaponDef.type);
-			frame.Add(new MySprite(SpriteType.TEXT, weapon, new Vector2(0f, 0f) * scale + centerPos, null, c, "DEBUG", TextAlignment.LEFT, 1f * scale));
+			string weapomType = dwi.weaponDef.type;
+			frame.Add(new MySprite(SpriteType.TEXT, "Weapon:", new Vector2(0f, 0f) * scale + centerPos, null, c, "DEBUG", TextAlignment.LEFT, 1f * scale));
 			frame.Add(new MySprite(SpriteType.TEXT, name, new Vector2(-11f, 25f) * scale + centerPos, null, c, "DEBUG", TextAlignment.LEFT, 1f * scale));
 			frame.Add(new MySprite(SpriteType.TEXT, weapomType, new Vector2(-11f, 50f) * scale + centerPos, null, c, "DEBUG", TextAlignment.LEFT, 1f * scale));
 			frame.Add(new MySprite(0, "Circle", new Vector2(-11f, 15f) * scale + centerPos, new Vector2(7f, 7f) * scale, c, null, TextAlignment.CENTER, 0f));

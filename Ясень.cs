@@ -42,7 +42,6 @@ namespace IngameScript
 
         string _updateInfo, _statusInfo, _debuginfo = "";
         static MyIni languageIni = new MyIni();
-        bool b = languageIni.TryParse(Languages.storage);
 
         List<IMyTerminalBlock> _allBlocks = new List<IMyTerminalBlock>();
         List<IMyUserControllableGun> _allGuns = new List<IMyUserControllableGun>();
@@ -85,13 +84,13 @@ namespace IngameScript
         //характеристики орудия
         public static Dictionary<string, WeaponDef> WeaponDefinitions = new Dictionary<string, WeaponDef>()
         {
-            {"SmallGatlingGun/", new WeaponDef() {type = "GATLING", Range = 800, StartSpeed = 400, ReloadTime = 1/11.67f} },
-            {"SmallGatlingGun/SmallGatlingGunWarfare2", new WeaponDef() {type = "GATLING", Range = 800, StartSpeed = 400, ReloadTime = 1/11.67f} },
-            {"SmallGatlingGun/SmallBlockAutocannon", new WeaponDef() {type = "AUTOCANON", Range = 800, StartSpeed = 400, ReloadTime = 1/2.5f} },
-            {"SmallMissileLauncherReload/SmallBlockMediumCalibreGun", new WeaponDef() {type = "ASSAULT", Range = 1400, StartSpeed = 500, ReloadTime = 6} },
-            {"SmallMissileLauncherReload/SmallRailgun", new WeaponDef() {type = "SRAILGUN", Range = 1400, StartSpeed = 1000, ReloadTime = 20} },
-            {"SmallMissileLauncher/LargeBlockLargeCalibreGun", new WeaponDef() {type = "ARTY", Range = 2000, StartSpeed = 500, ReloadTime = 12} },
-            {"SmallMissileLauncherReload/LargeRailgun", new WeaponDef() {type = "LRAILGUN", Range = 2000, StartSpeed = 2000, ReloadTime = 60} },
+            {"SmallGatlingGun/", new WeaponDef() {type = "Gatling", Range = 800, StartSpeed = 400, ReloadTime = 1/11.67f} },
+            {"SmallGatlingGun/SmallGatlingGunWarfare2", new WeaponDef() {type = "Gatling", Range = 800, StartSpeed = 400, ReloadTime = 1/11.67f} },
+            {"SmallGatlingGun/SmallBlockAutocannon", new WeaponDef() {type = "Autocanon", Range = 800, StartSpeed = 400, ReloadTime = 1/2.5f} },
+            {"SmallMissileLauncherReload/SmallBlockMediumCalibreGun", new WeaponDef() {type = "Assault canon", Range = 1400, StartSpeed = 500, ReloadTime = 6} },
+            {"SmallMissileLauncherReload/SmallRailgun", new WeaponDef() {type = "Small Railgun", Range = 1400, StartSpeed = 1000, ReloadTime = 20} },
+            {"SmallMissileLauncher/LargeBlockLargeCalibreGun", new WeaponDef() {type = "Artillery", Range = 2000, StartSpeed = 500, ReloadTime = 12} },
+            {"SmallMissileLauncherReload/LargeRailgun", new WeaponDef() {type = "Large Railgun", Range = 2000, StartSpeed = 2000, ReloadTime = 60} },
         };
         CockpitDef _cockpitInfo = new CockpitDef();
         WeaponDef _weaponInfo = new WeaponDef();
@@ -186,13 +185,13 @@ namespace IngameScript
             }
             CommandHandler(argument);
             _radar.Update(ref _debuginfo, Tick, _unlockTime, _initialRange);
-            _statusInfo += $"{Languages.Translate(_language, "SEARCHING")}: {_radar.Searching}\n";
+            _statusInfo += $"Radar - searching: {_radar.Searching}\n";
             if (_radar.lockedtarget != null)
             {
                 EnemyTargetedInfo newTarget;
                 newTarget = _turretRadar.Update(ref _debuginfo, Tick, _radar.lockedtarget);
                 _radar.UpdateTarget(newTarget);
-                _statusInfo += $"{Languages.Translate(_language, "LOCKED")}: {_radar.lockedtarget.Type} \n";
+                _statusInfo += $"Target locked: {_radar.lockedtarget.Type} \n";
             }
             else
             {
@@ -444,6 +443,7 @@ namespace IngameScript
                         else
                             Drawing.DrawTurretTarget(DI);
                     }
+                    _debugLCD.WriteText("4");
                     if (_radar.lockedtarget != null)
                     {
 
@@ -548,7 +548,7 @@ namespace IngameScript
             {
                 FindReferenceBlock();
             }
-
+            if (_referenceBlock == null)
             isTurret = false;
             isVehicle = false;
 
@@ -616,12 +616,12 @@ namespace IngameScript
             }
             if (_radarCameras.Count < 2)
             {
-                updateInfo += $"\n{Languages.Translate(_language, "CANTLOCK")}\n";
+                updateInfo += $"\nNot enought cameras in the radar\n";
             }
 
-            updateInfo += $"\n{Languages.Translate(_language, "LASTUPDATE")}\n" +
-                $"{Languages.Translate(_language, "RADARCAMERAS")} " + _radarCameras.Count +
-                $"\n{Languages.Translate(_language, "TEXTPANELS")} " + _textPanels.Count + "\n";
+            updateInfo += $"\nLast update:\n" +
+                $"Cameras in radar - " + _radarCameras.Count +
+                $"\nText panels - " + _textPanels.Count + "\n";
 
             //Initialize cocpit
             if (_shipControllers.Count == 1)
@@ -637,7 +637,7 @@ namespace IngameScript
 
             }
             if (_myShipController != null)
-                updateInfo += $"\n{Languages.Translate(_language, "MAINCOCKPIT")} {_myShipController.CustomName}\n";
+                updateInfo += $"\nMain cockpit - \"{_myShipController.CustomName}\"\n";
             //Try to create autorgetnig system
             //First, try to create turret from FCS group, like classic scenario (in MART for example)
             isTurret = false;
@@ -681,9 +681,9 @@ namespace IngameScript
                 }
                 if (_myGuns.Count == 0)
                 {
-                    updateInfo += $"{Languages.Translate(_language, "TURRETGROUPBLOCKS")}\n" +
-                        $"{Languages.Translate(_language, "FAIL")}\n" +
-                    $"{Languages.Translate(_language, "NOGUNS")} \"{_elevationRotorTag}\"\n";
+                    updateInfo += $"\nTrying to create a turret from blocks in a group...\n" +
+                        $"Failure\n" +
+                    $"Not found weapons on rotors \"{_elevationRotorTag}\"\n";
                     _rotorsE.Clear();
                     _rotorA = null;
                     _myGuns.Clear();
@@ -691,8 +691,8 @@ namespace IngameScript
                 else
                 {
                     _turret.UpdateBlocks(_rotorA, _rotorsE, _mainElRotor, _myGuns, _allActiveCameras, _myGyro);
-                    updateInfo += $"{Languages.Translate(_language, "TURRETGROUPBLOCKS")}\n" +
-                        $"{Languages.Translate(_language, "SUCCESS")}\n";
+                    updateInfo += $"Trying to create a turret from blocks in a group...\n" +
+                        $"Success\n";
                     isTurret = true;
                     canAutoTarget = true;
                 }
@@ -700,9 +700,9 @@ namespace IngameScript
             else
             {
 
-                updateInfo += $"{Languages.Translate(_language, "TURRETGROUPBLOCKS")}\n" +
-                    $"{Languages.Translate(_language, "FAIL")}\n" +
-                    $"{Languages.Translate(_language, "NOROTORS")}\n";
+                updateInfo += $"Trying to create a turret from blocks in a group..." +
+                    $"Failure\n" +
+                    $"Not enought rotors in the group\n";
             }
             //Auto set Turret?
             if (!isTurret)
@@ -779,12 +779,12 @@ namespace IngameScript
                 if (_rotorA != null && _mainElRotor != null)
                 {
                     _turret.UpdateBlocks(_rotorA, _rotorsE, _mainElRotor, _myGuns, _allActiveCameras, _myGyro);
-                    updateInfo += $"{Languages.Translate(_language, "AUTOTURRETSUCCESS")}\n";
+                    updateInfo += $"Successful auto-transition to turret mode, all components found\n";
                     isTurret = true;//so we are in turret
                     canAutoTarget = true;
                 }
                 else
-                    updateInfo += $"{Languages.Translate(_language, "AUTOTURRETFAIL")}\n";
+                    updateInfo += $"Auto-transition to turret mode failed\n";
             }
             //if not turret, may be veacle?
             if (!isTurret)
@@ -794,20 +794,20 @@ namespace IngameScript
                 if (_shipControllers.Count == 0)
                 {
 
-                    updateInfo += $"{Languages.Translate(_language, "AUTOHULLFAIL")}: " +
-                        $"{Languages.Translate(_language, "NOCOCKPITS")}\n";
+                    updateInfo += $"Transition to hull-guided mode failed:\n" +
+                        $"No cockpits\n";
                 }
                 else
                 {
                     if (_myGyro.Count == 0)
-                        updateInfo += $"{Languages.Translate(_language, "AUTOHULLFAIL")}: " +
-                        $"{Languages.Translate(_language, "NOGYRO")}\n";
+                        updateInfo += $"Transition to hull-guided mode failed:\n" +
+                        $"No gyros\n";
                     else
                     {
                         canAutoTarget = true;
                         isVehicle = true;
-                        updateInfo += $"{Languages.Translate(_language, "AUTOHULLSUCCESS")}: \n" +
-                        $"{Languages.Translate(_language, "GYROS")}: {_myGyro.Count}\n";
+                        updateInfo += $"Transition to hull-guided mode failed:\n" +
+                        $"Gyroscopes: {_myGyro.Count}\n";
                     }
                 }
             }
@@ -842,6 +842,7 @@ namespace IngameScript
                 if (TryGetWeaponFromName(_myIniWeapon))
                     return;
             }
+            _debugLCD.WriteText($"{_allActiveCameras.Count}");
             if (isTurret)
             {
                 _referenceBlock = _turret.referenceBlock;

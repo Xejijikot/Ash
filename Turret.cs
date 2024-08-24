@@ -45,7 +45,6 @@ namespace IngameScript
 		MatrixD lastRotorAMatrix;
 		MatrixD lastRotorEMatrix;
 		static MyIni languageIni = new MyIni();
-		bool b = languageIni.TryParse(Languages.storage);
 		bool firstRunAim = true;
 		double yawDeltaInput = 0;
 		double yawInputSpeed = 0;
@@ -457,12 +456,13 @@ namespace IngameScript
 
 		public void Status(ref string statusInfo, string language, string azimuthTag, string elevationTag)
 		{
-			statusInfo += $"\n{Languages.Translate(language, "ROTOR")} \"{azimuthTag}\": {rotorA.CustomName}\n" +
-				$"{Languages.Translate(language, "MAINEROTOR")} \"{elevationTag}\": {MainElRotor.CustomName}\n" +
-				$"{Languages.Translate(language, "ALLROTORS")}: {rotorsE.Count + 1}\n" +
-				$"{Languages.Translate(language, "ALLWEAPONS")}: {weapons.Count}\n";
+			statusInfo += $"\nRotor \"{azimuthTag}\": {rotorA.CustomName}\n" +
+				$"Main elevation rotor \"{elevationTag}\": {MainElRotor.CustomName}\n" +
+				$"Count of elevation rotors: {rotorsE.Count + 1}\n" +
+				$"Count of weapons: {weapons.Count}\n";
 		}
-		bool SetSupprotRotor(IMyMotorStator rotor, Vector3D direction, float mainRotTurnSpeed)
+
+        bool SetSupprotRotor(IMyMotorStator rotor, Vector3D direction, float mainRotTurnSpeed)
 		{
 			float localMultiplierElevation = MultiplierElevation;
 			if (rotor.WorldMatrix.Up.Dot(MainElRotor.WorldMatrix.Up) < 0)  //Если ротор сонаправлен, то оставляем коэф, иначе меняем
