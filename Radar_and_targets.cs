@@ -143,7 +143,8 @@ namespace IngameScript
 						}
 						if (lockedtarget.TargetedPoint != null)													                //Если не вышло - в точку в которую хотим попасть
 						{
-							point = lockedtarget.inBodyPointPosition.GetValueOrDefault() + shift;
+                            Vector3D worldDirection = Vector3D.TransformNormal(lockedtarget.inBodyPointPosition.GetValueOrDefault(), lockedtarget.Orientation);
+                            point = worldDirection + lockedtarget.Position + shift;
 							dir = point - camPos;
 							locDir = Vector3D.TransformNormal(dir, MatrixD.Transpose(c.WorldMatrix));
 							DetectedEntity = c.Raycast(dir.Length() + 10, locDir);
