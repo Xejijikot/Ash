@@ -29,14 +29,17 @@ namespace IngameScript
         const string _debugLCDTag = "Отладка";
         const string _IGCAsh_to_AxisTag = "XJI_ML_Axis";
         const string _IGCAshTag = "XJI_FCS_Ash";
+        string _myName = "Ash carrier";
         const int ReInitTime = 360;
         //Color _interfaceColor = new Color(179, 237, 255, 255);
         Color _interfaceColor = new Color(0, 100, 0, 255);
-        Color _targetColor = new Color(0, 255, 0);
-        Color _ballisticColor = new Color(0, 150, 0);
+        Color _targetColor = new Color(0, 255, 0, 255);
+        Color _ballisticColor = new Color(0, 255, 0, 255);
         Color _weaponColor = new Color(255, 0, 0);
         Color _powerColor = new Color(255, 255, 0);
         Color _propulsionColor = new Color(0, 0, 255);
+        Color _missileColor = new Color(172, 0, 230, 255);
+        Color _allieColor = new Color(249, 124, 0, 255);
         public static int _unlockTime = 180;
         const int timeToUpdateButtons = 5;
 
@@ -44,6 +47,7 @@ namespace IngameScript
 
         List<IMyTerminalBlock> _allBlocks = new List<IMyTerminalBlock>();
         List<IMyUserControllableGun> _allGuns = new List<IMyUserControllableGun>();
+        List<IMyRadioAntenna> _antennas = new List<IMyRadioAntenna>();
         List<IMyUserControllableGun> _myGuns = new List<IMyUserControllableGun>();
         List<IMySmallGatlingGun> _gatlings = new List<IMySmallGatlingGun>();
         List<IMySmallMissileLauncher> _mLaunchers = new List<IMySmallMissileLauncher>();
@@ -58,6 +62,10 @@ namespace IngameScript
         List<IMyGyro> _myGyro = new List<IMyGyro>();
         List<IMyLargeTurretBase> _turrets = new List<IMyLargeTurretBase>();
         List<IMyTurretControlBlock> _TCs = new List<IMyTurretControlBlock>();
+        LinkedList<UnitInfo> _alliesT = new LinkedList<UnitInfo>();
+        LinkedList<UnitInfo> _missiles = new LinkedList<UnitInfo> ();
+        LinkedList<AllieUnitInfo> _allies = new LinkedList<AllieUnitInfo>();
+
 
         IMyTextPanel _debugLCD;
         IMyBlockGroup _FCSGroup;
@@ -96,8 +104,8 @@ namespace IngameScript
         string _myIniWeapon = "", _customWeapon = "false";
         //Сохранение данных
         readonly MyIni _myIni = new MyIni();
-        const string INI_SECTION_NAMES = "Names", INI_LANGUAGE = "Language", INI_GROUP_NAME_TAG = "Group name tag", INI_AZ_ROTOR_NAME_TAG = "Azimuth Rotor name tag", INI_EL_ROTOR_NAME_TAG = "Elevation Rotor name tag", INI_MAIN_COCKPIT_NAME_TAG = "Name tag \"Main\"", INI_SIGHT_NAME_TAG = "Sight name tag",
-            INI_SECTION_DISPLAY = "Display", INI_UNLIMITED_FPS = "FPS Limit", INI_SHOW_WEAPON_INFO = "Show Weapon Info", INI_SHOW_TANK = "Show Tank", INI_COLOR_INTERFACE = "Interface c", INI_COLOR_TARGET = "Target c", INI_COLOR_BALLISTC = "Ballistic point c", INI_COLOR_TARGET_WEAPON = "Target weapons c", INI_COLOR_TARGET_POWER = "Target power c", INI_COLOR_TARGET_PROPULSION = "Target propulsions c",
+        const string INI_SECTION_NAMES = "Names", INI_NAME = "My name", INI_GROUP_NAME_TAG = "Group name tag", INI_AZ_ROTOR_NAME_TAG = "Azimuth Rotor name tag", INI_EL_ROTOR_NAME_TAG = "Elevation Rotor name tag", INI_MAIN_COCKPIT_NAME_TAG = "Name tag \"Main\"", INI_SIGHT_NAME_TAG = "Sight name tag",
+            INI_SECTION_DISPLAY = "Display", INI_UNLIMITED_FPS = "FPS Limit", INI_SHOW_WEAPON_INFO = "Show Weapon Info", INI_SHOW_TANK = "Show Tank", INI_COLOR_INTERFACE = "Interface c", INI_COLOR_TARGET = "Target color", INI_COLOR_BALLISTC = "Ballistic point color", INI_COLOR_TARGET_WEAPON = "Target weapons color", INI_COLOR_TARGET_POWER = "Target power color", INI_COLOR_TARGET_PROPULSION = "Target propulsions color", INI_COLOR_ALLIE = "Allie color",
             INI_SECTION_RADAR = "Radar", INI_INITIAL_RANGE = "Initial Range",
             INI_SECTION_CONTROLS = "Controls", INI_EL_MULT = "Elevation Rotor Multiplier", INI_AZ_MULT = "Azimuth Rotor Multiplier", INI_YAW_MULT = "Yaw Gyro Multiplier", INI_PITCH_MULT = "Pitch Gyro Multiplier", INI_INTERACTIVE_MOD = "Interactive Mode",
             INI_SECTION_WEAPON = "Weapon", INI_MY_WEAPON = "My weapon", INI_CUSTOM_SETTINGS = "Custom settings", INI_WEAPON_SHOOT_VELOCITY = "Projectile velocity", INI_WEAPON_FIRE_RANGE = "Shot range", INI_WEAPON_RELOAD_TIME = "Reload Time",
@@ -105,15 +113,15 @@ namespace IngameScript
             INI_SECTION_TARGETS = "Targets", INI_ENEMY = "Enemy", INI_NEUTRAL = "Neutral", INI_ALLIE = "Allie", INI_DISPLAYED_TARGET = "Displayed Target",
             INI_SECTION_DEFAULTS = "Defaults", INI_AZIMUTH_ANGLE = "Azimuth default angle", INI_ELEVATION_ANGLE = "Elevation default angle";
 
-        string _language = "English", _FCSTag = "Ash", _azimuthRotorTag = "Azimuth", _elevationRotorTag = "Elevation", _mainTag = "Main", _sightNameTag = "SIGHT";
+        string _FCSTag = "Ash", _azimuthRotorTag = "Azimuth", _elevationRotorTag = "Elevation", _mainTag = "Main", _sightNameTag = "SIGHT";
 
         float elevationSpeedMult = 0.001f, azimuthSpeedMult = 0.001f, yawMult = 0.001f, pitchMult = 0.001f,
             _myWeaponShotVelocity = 400, _myWeaponRangeToFire = 800, _myWeaponReloadTime = 1 / 2.5f,
             _defObsCoefUp = 0.46f, _defObsCoefBack = 0.28f,
             _initialRange = 2000,
             _azimuthDefaultAngle = 0, _elevationDefaultAngle = 0;
-        bool isTurret = false, canAutoTarget = false, stabilization = true, autotarget = false, aimAssist = false, isVehicle = false, getTarget = false, _showWeaponInfo = true, drawTank = true, interactive = false, block = false, centering = false, _fpsLimit = false;
-        long Tick = 0;
+        bool isTurret = false, canAutoTarget = false, stabilization = true, autotarget = false, aimAssist = false, isVehicle = false, getTarget = false, _showWeaponInfo = true, drawTank = true, interactive = false, block = false, centering = false, _fpsLimit = false, _axis = false;
+        long Tick = 0, _lastAxisTick = -120;
         bool allie = false, enemy = true, neutral = true;
         IMyMotorStator _mainElRotor;
 
@@ -183,7 +191,17 @@ namespace IngameScript
                     break;
             }
             CommandHandler(argument);
-            _radar.Update(ref _debuginfo, Tick, _unlockTime, _initialRange);
+            if(_radar.Update(ref _debuginfo, Tick, _unlockTime, _initialRange))
+            {
+                foreach (var m in _missiles)
+                {
+                    if (m.tId == _radar.lockedtarget.EntityId)
+                    {
+                        _communicator.SendInfo(Tick, _IGCAsh_to_AxisTag, _radar.lockedtarget);
+                        break;
+                    }
+                }
+            }
             _statusInfo += $"Radar - searching: {_radar.Searching}\n";
             if (_radar.lockedtarget != null)
             {
@@ -197,7 +215,20 @@ namespace IngameScript
                 _turretRadar.Update(Tick);
             }
             //Broadcasting
-            _communicator.GetMessageFromAxis(_IGCAsh_to_AxisTag, _radar.lockedtarget, _referenceBlock);
+            _communicator.GetMessageFromAxis(Tick, ref _lastAxisTick, _IGCAsh_to_AxisTag, _radar.lockedtarget, _referenceBlock, _missiles);
+            if (_antennas.Count > 0)
+            {
+                if (_activeShipController != null)
+                {
+                    _communicator.SendMyPos(_IGCAshTag, Me.EntityId, _activeShipController.GetPosition(), _myName);
+                }
+                else
+                    _communicator.SendMyPos(_IGCAshTag, Me.EntityId, Me.GetPosition(), _myName);
+                _communicator.GetMessageFromAsh(Tick, Me.EntityId, _IGCAshTag, _allies);
+            }
+            _axis = false;
+            if ((Tick - _lastAxisTick) < 120)
+                _axis = true;
             //Getting status for active cockpit
             if (_myShipController != null)
                 _activeShipController = _myShipController;
@@ -318,26 +349,26 @@ namespace IngameScript
                         {
                             if (autotarget)
                             {
-                                _turret.Status(ref _statusInfo, _language, _azimuthRotorTag, _elevationRotorTag);
+                                _turret.Status(ref _statusInfo, _azimuthRotorTag, _elevationRotorTag);
                                 _turret.Update(Intersept.GetValueOrDefault(), true, 0, 0, false);
                             }
                             else
                             {
-                                _turret.Status(ref _statusInfo, _language, _azimuthRotorTag, _elevationRotorTag);
+                                _turret.Status(ref _statusInfo, _azimuthRotorTag, _elevationRotorTag);
                                 _turret.Update(Intersept.GetValueOrDefault(), false, azimuthSpeedMult * horizont, elevationSpeedMult * vertical, false);
                             }
                             centering = false;
                         }
                         else
                         {
-                            _turret.Status(ref _statusInfo, _language, _azimuthRotorTag, _elevationRotorTag);
+                            _turret.Status(ref _statusInfo, _azimuthRotorTag, _elevationRotorTag);
                             _turret.Update(azimuthSpeedMult * horizont, elevationSpeedMult * vertical, ref centering, _azimuthDefaultAngle, _elevationDefaultAngle, stabilization);
                         };
                     }
                     else
                     {
 
-                        _turret.Status(ref _statusInfo, _language, _azimuthRotorTag, _elevationRotorTag);
+                        _turret.Status(ref _statusInfo, _azimuthRotorTag, _elevationRotorTag);
                         _turret.Update(azimuthSpeedMult * horizont, elevationSpeedMult * vertical, ref centering, _azimuthDefaultAngle, _elevationDefaultAngle, stabilization);
                     }
                 }
@@ -429,7 +460,7 @@ namespace IngameScript
                             tankInfo.drawTank = true;
                         }
                     }
-                    Drawing.BattleInterface(DI, _language, searching, tankInfo, dWI, 1.0f, distance, losing, isTurret, isVehicle, autotarget, aimAssist);
+                    Drawing.BattleInterface(DI, tankInfo, dWI, _axis, distance, losing, isTurret, isVehicle, autotarget, aimAssist);
                     foreach (var target in _turretRadar.GetTargets())
                     {
                         DI.Target = target;
@@ -442,9 +473,22 @@ namespace IngameScript
                         else
                             Drawing.DrawTurretTarget(DI);
                     }
+                    foreach (var m in _missiles)
+                    {
+                        DI.point = m.target;
+                        DI.c = _missileColor;
+                        Drawing.DrawMissileTarget(DI);
+                        DI.point = m.pos;
+                        Drawing.DrawMissilePos(DI);
+                    }
+                    foreach (var a in _allies)
+                    {
+                        DI.point = a.pos;
+                        DI.c = _allieColor;
+                        Drawing.DrawAlliePos(DI, a.name, (float)(a.pos - obs.Value).Length());
+                    }
                     if (_radar.lockedtarget != null)
                     {
-
                         DI.Target = _radar.lockedtarget;
                         DI.c = _targetColor;
                         Drawing.DrawTarget(ref _debuginfo, DI, _targetingPoint);
@@ -453,7 +497,8 @@ namespace IngameScript
                             Drawing.DrawSubsystem(ref _debuginfo, DI, subsystem, _weaponColor, _propulsionColor, _powerColor);
                         }
                     }
-                    if (Intersept != null)
+
+                    /*if (Intersept != null)
                     {
                         DI.point = Intersept.Value;
                         if (!((DI.point - MyPos).Length() > _weaponInfo.Range))
@@ -461,7 +506,7 @@ namespace IngameScript
                             DI.c = _targetColor;
                             Drawing.DrawInterceptVector(DI);
                         }
-                    }
+                    }*/
                     if (BallicticPoint != null)
                     {
                         DI.point = BallicticPoint.Value;
@@ -470,6 +515,12 @@ namespace IngameScript
                             DI.c = _ballisticColor;
                             Drawing.DrawBallisticPoint(DI, _interfaceColor, Intersept == null);
                         }
+                    }
+                    DI.point = obsForward.GetValueOrDefault();
+                    DI.c = _interfaceColor;
+                    if (searching)
+                    {
+                        Drawing.DrawSight(DI);
                     }
                     //_debugLCD.WriteText(_debuginfo, true);
                     _debuginfo = "";
@@ -505,7 +556,7 @@ namespace IngameScript
 
             LoadIniConfig();
             updateInfo = "";
-            updateInfo += $"Language: {_language}\n";
+            updateInfo += $"Language: English\n";
             canAutoTarget = false;
             _allBlocks.Clear();
             //weapons
@@ -515,7 +566,6 @@ namespace IngameScript
             _mLaunchers.Clear();
             //radar
             _myCameras.Clear();
-            _textPanels.Clear();
             _radarCameras.Clear();
             _allActiveCameras.Clear();
             _turrets.Clear();
@@ -528,6 +578,9 @@ namespace IngameScript
             _mainElRotor = null;
             _rotorA = null;
             _myGyro.Clear();
+            //stuff
+            _antennas.Clear();
+            _textPanels.Clear();
 
             GridTerminalSystem.GetBlocksOfType(_shipControllers);
             GridTerminalSystem.GetBlocksOfType(_allRotors);
@@ -573,7 +626,8 @@ namespace IngameScript
 
                     if (SystemHelper.AddToListIfType(block, _textPanels))
                         continue;
-
+                    if (SystemHelper.AddToListIfType(block, _antennas))
+                        continue;
                     if (block.IsSameConstructAs(Me))
                     {
                         if (SystemHelper.AddToListIfType(block, _TCs))
@@ -587,6 +641,8 @@ namespace IngameScript
                         continue;
                 }
             }
+            foreach (var a in _antennas)
+                a.EnableBroadcasting = true;
             foreach (var camera in _allActiveCameras)
                 if (!camera.CustomName.Contains(_sightNameTag))
                     _radarCameras.Add(camera);
@@ -903,13 +959,13 @@ namespace IngameScript
                     _weaponInfo = GetWeaponInfo(_allGuns[0]);
                 else
                 {
-                    _weaponInfo = new WeaponDef() { type = "CUSTOM", Range = _initialRange, StartSpeed = _myWeaponShotVelocity, ReloadTime = _myWeaponReloadTime };
+                    _weaponInfo = new WeaponDef() { type = "CUSTOM", Range = _myWeaponRangeToFire, StartSpeed = _myWeaponShotVelocity, ReloadTime = _myWeaponReloadTime };
                 }
                 return;
             }
             else if (_customWeapon == "true")
             {
-                _weaponInfo = new WeaponDef() { type = "CUSTOM", Range = _initialRange, StartSpeed = _myWeaponShotVelocity, ReloadTime = _myWeaponReloadTime };
+                _weaponInfo = new WeaponDef() { type = "CUSTOM", Range = _myWeaponRangeToFire, StartSpeed = _myWeaponShotVelocity, ReloadTime = _myWeaponReloadTime };
             }/*
 			else
 			{
@@ -969,7 +1025,7 @@ namespace IngameScript
             else if (WeaponDefinitions.TryGetValue(_customWeapon, out weaponInfo))
                 return weaponInfo;
             else
-                return new WeaponDef() { type = "CUSTOM", Range = _initialRange, StartSpeed = _myWeaponShotVelocity, ReloadTime = _myWeaponReloadTime };
+                return new WeaponDef() { type = "CUSTOM", Range = _myWeaponRangeToFire, StartSpeed = _myWeaponShotVelocity, ReloadTime = _myWeaponReloadTime };
         }
         void LoadIniConfig()
         {
@@ -980,8 +1036,8 @@ namespace IngameScript
                 SC();
                 return;
             }
+            _myName = _myIni.Get(INI_SECTION_NAMES, INI_NAME).ToString(_myName);
             _FCSTag = _myIni.Get(INI_SECTION_NAMES, INI_GROUP_NAME_TAG).ToString(_FCSTag);
-            _language = _myIni.Get(INI_SECTION_NAMES, INI_LANGUAGE).ToString(_language);
             _azimuthRotorTag = _myIni.Get(INI_SECTION_NAMES, INI_AZ_ROTOR_NAME_TAG).ToString(_azimuthRotorTag);
             _elevationRotorTag = _myIni.Get(INI_SECTION_NAMES, INI_EL_ROTOR_NAME_TAG).ToString(_elevationRotorTag);
             _mainTag = _myIni.Get(INI_SECTION_NAMES, INI_MAIN_COCKPIT_NAME_TAG).ToString(_mainTag);
@@ -995,6 +1051,7 @@ namespace IngameScript
             IniToColor(_myIni.Get(INI_SECTION_DISPLAY, INI_COLOR_TARGET_WEAPON), ref _weaponColor);
             IniToColor(_myIni.Get(INI_SECTION_DISPLAY, INI_COLOR_TARGET_POWER), ref _powerColor);
             IniToColor(_myIni.Get(INI_SECTION_DISPLAY, INI_COLOR_TARGET_PROPULSION), ref _propulsionColor);
+            IniToColor(_myIni.Get(INI_SECTION_DISPLAY, INI_COLOR_ALLIE), ref _allieColor);
             _initialRange = (float)_myIni.Get(INI_SECTION_RADAR, INI_INITIAL_RANGE).ToDouble(_initialRange);
             elevationSpeedMult = (float)_myIni.Get(INI_SECTION_CONTROLS, INI_EL_MULT).ToDouble(elevationSpeedMult);
             azimuthSpeedMult = (float)_myIni.Get(INI_SECTION_CONTROLS, INI_AZ_MULT).ToDouble(azimuthSpeedMult);
@@ -1019,8 +1076,8 @@ namespace IngameScript
         void SC()
         {
             _myIni.Clear();
+            _myIni.Set(INI_SECTION_NAMES, INI_NAME, _myName);
             _myIni.Set(INI_SECTION_NAMES, INI_GROUP_NAME_TAG, _FCSTag);
-            _myIni.Set(INI_SECTION_NAMES, INI_LANGUAGE, _language);
             _myIni.Set(INI_SECTION_NAMES, INI_AZ_ROTOR_NAME_TAG, _azimuthRotorTag);
             _myIni.Set(INI_SECTION_NAMES, INI_EL_ROTOR_NAME_TAG, _elevationRotorTag);
             _myIni.Set(INI_SECTION_NAMES, INI_MAIN_COCKPIT_NAME_TAG, _mainTag);
@@ -1034,6 +1091,7 @@ namespace IngameScript
             _myIni.Set(INI_SECTION_DISPLAY, INI_COLOR_TARGET_WEAPON, ColorToString(_weaponColor));
             _myIni.Set(INI_SECTION_DISPLAY, INI_COLOR_TARGET_POWER, ColorToString(_powerColor));
             _myIni.Set(INI_SECTION_DISPLAY, INI_COLOR_TARGET_PROPULSION, ColorToString(_propulsionColor));
+            _myIni.Set(INI_SECTION_DISPLAY, INI_COLOR_ALLIE, ColorToString(_allieColor));
             _myIni.Set(INI_SECTION_RADAR, INI_INITIAL_RANGE, _initialRange);
             _myIni.Set(INI_SECTION_CONTROLS, INI_EL_MULT, elevationSpeedMult);
             _myIni.Set(INI_SECTION_CONTROLS, INI_AZ_MULT, azimuthSpeedMult);
@@ -1162,7 +1220,7 @@ namespace IngameScript
         {
             if (WeaponDefinitions.TryGetValue(key, out _weaponInfo))
             {
-                _initialRange = (float)_weaponInfo.Range;
+                _myWeaponRangeToFire = (float)_weaponInfo.Range;
                 _myWeaponShotVelocity = (float)_weaponInfo.StartSpeed;
                 _myWeaponReloadTime = (float)_weaponInfo.ReloadTime;
             }

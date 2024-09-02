@@ -454,7 +454,7 @@ namespace IngameScript
 			}
 		}
 
-		public void Status(ref string statusInfo, string language, string azimuthTag, string elevationTag)
+		public void Status(ref string statusInfo, string azimuthTag, string elevationTag)
 		{
 			statusInfo += $"\nRotor \"{azimuthTag}\": {rotorA.CustomName}\n" +
 				$"Main elevation rotor \"{elevationTag}\": {MainElRotor.CustomName}\n" +

@@ -154,7 +154,51 @@ namespace IngameScript
 				DrawPoint(dI.c, dI.frame, rect.Center + (marker * mult));
 			}
 		}
-		public static void DrawInterceptVector(DrawingInfo dI)
+        public static void DrawMissileTarget(DrawingInfo dI)
+        {
+            Vector3D targetpos = dI.point;
+			if (targetpos == Vector3D.Zero)
+				return;
+            Vector3D viewvector = targetpos - dI.obspos;
+            if (!PrepeareCoords(dI.surface, dI.obspos, viewvector))
+                return;
+            //debugInfo += "GPS: " + surface.CustomName + ":" + point_on_lcd.X + ":" + point_on_lcd.Y + ":" + point_on_lcd.Z + ":#FF75C9F1:\n";
+            Vector3D lcdToTarget = targetpos - cord_lcd;
+            if (viewvector.Length() > lcdToTarget.Length())
+            {
+                //debugInfo += $"{marker}\n";
+                DrawMT(dI.c, dI.frame, rect.Center + (marker * mult));
+            }
+        }
+        public static void DrawMissilePos(DrawingInfo dI)
+        {
+            Vector3D targetpos = dI.point;
+            Vector3D viewvector = targetpos - dI.obspos;
+            if (!PrepeareCoords(dI.surface, dI.obspos, viewvector))
+                return;
+            //debugInfo += "GPS: " + surface.CustomName + ":" + point_on_lcd.X + ":" + point_on_lcd.Y + ":" + point_on_lcd.Z + ":#FF75C9F1:\n";
+            Vector3D lcdToTarget = targetpos - cord_lcd;
+            if (viewvector.Length() > lcdToTarget.Length())
+            {
+                //debugInfo += $"{marker}\n";
+                MPoint(dI.c, dI.frame, rect.Center + (marker * mult));
+            }
+        }
+        public static void DrawAlliePos(DrawingInfo dI, string name, float range)
+        {
+            Vector3D targetpos = dI.point;
+            Vector3D viewvector = targetpos - dI.obspos;
+            if (!PrepeareCoords(dI.surface, dI.obspos, viewvector))
+                return;
+            //debugInfo += "GPS: " + surface.CustomName + ":" + point_on_lcd.X + ":" + point_on_lcd.Y + ":" + point_on_lcd.Z + ":#FF75C9F1:\n";
+            Vector3D lcdToTarget = targetpos - cord_lcd;
+            if (viewvector.Length() > lcdToTarget.Length())
+            {
+                //debugInfo += $"{marker}\n";
+                DrawAP(dI.c, dI.frame, rect.Center + (marker * mult), name, range);
+            }
+        }
+        /*public static void DrawInterceptVector(DrawingInfo dI)
 		{
 			Vector3D viewvector = dI.point - dI.obspos;
 			if (!PrepeareCoords(dI.surface, dI.obspos, viewvector))
@@ -167,8 +211,8 @@ namespace IngameScript
 				//DrawSpriteX(c, frame, rect.Center + (marker * mult));
 				DrawCircle(dI.c, dI.frame, rect.Center + (marker * mult));
 			}
-		}
-		public static void DrawBallisticPoint(DrawingInfo dI, Color interfaceColor, bool distanceB = false)
+		}*/
+        public static void DrawBallisticPoint(DrawingInfo dI, Color interfaceColor, bool distanceB = false)
 		{
 			Vector3D viewvector = dI.point - dI.obspos;
 			if (!PrepeareCoords(dI.surface, dI.obspos, viewvector))
@@ -176,7 +220,7 @@ namespace IngameScript
 			Vector3D lcdToTarget = dI.point - cord_lcd;
 			if (viewvector.Length() > lcdToTarget.Length())
 			{
-				DrawSpriteX(dI.c, dI.frame, rect.Center + (marker * mult));
+                Point(dI.c, dI.frame, rect.Center + (marker * mult));
 				if (distanceB)
 				{
 					double distance = (dI.point - dI.obspos).Length();
@@ -184,28 +228,29 @@ namespace IngameScript
 				}
 			}
 		}
-		public static void BattleInterface(DrawingInfo dI, string Language, bool searching, TankInfo tankInfo, DWI dwi, float scale = 1f, double distance = 0, float locked = 1.0f, bool isTurret = false, bool isVeachle = false, bool autoAim = false, bool aimAssist = false)
+		public static void BattleInterface(DrawingInfo dI, TankInfo tankInfo, DWI dwi, bool axis, double distance = 0, float locked = 1.0f, bool isTurret = false, bool isVeachle = false, bool autoAim = false, bool aimAssist = false)
 		{
 			Vector3D viewvector = dI.point;
 			if (!PrepeareCoords(dI.surface, dI.obspos, viewvector))
 				return;
 			//debugInfo += "GPS: " + surface.CustomName + ":" + cord_lcd.X + ":" + cord_lcd.Y + ":" + cord_lcd.Z + ":#FF75C9F1:\n";
-			DrawInterface(dI, Language, isTurret, isVeachle);
+			DrawInterface(dI, isTurret, isVeachle);
 			//string aiStatus = "";
 			Vector2 statusPos = new Vector2(-40, 60);
 			Vector2 infoPos = new Vector2(-33, 40);
 			Vector2 wInfoPos = new Vector2(-200, 78);
-			DrawSight(dI.c, dI.frame, rect.Center + (marker * mult));
-			if (searching)
-				DrawXSight(dI.c, dI.frame, rect.Center + (marker * mult));
 			if (distance != 0)
 				DrawDistance(dI.c, dI.frame, rect.Center + (marker * mult), distance, 0.7f);
 			if (locked < 0.9f)
 				LosingTarget(dI.c, dI.frame, rect.Center + (marker * mult), locked, 0.7f);
 			if (aimAssist)
-				DrawLockedMode(dI.c, Language, dI.frame, rect.Center + statusPos + (marker * mult), autoAim, 0.7f);
+				DrawLockedMode(dI.c, dI.frame, rect.Center + statusPos + (marker * mult), autoAim, 0.7f);
+			if (axis)
+			{
+				DrawAxisInfo(dI.c, dI.frame, rect.Center + wInfoPos + (marker * mult), 0.7f);
+            }
 			if (dwi.draw)
-				DrawWeaponInfo(dI.c, Language, dwi, dI.frame, rect.Center + wInfoPos + (marker * mult), 0.7f);
+				DrawWeaponInfo(dI.c, dwi, dI.frame, rect.Center + wInfoPos + (marker * mult), 0.7f);
 			if (tankInfo.drawTank)
 			{
 				Vector2 tankPos = new Vector2(150, 150);
@@ -219,14 +264,14 @@ namespace IngameScript
 					DrawTurretInfo(dI.c, dI.frame, infoPos + rect.Center + (marker * mult), tankInfo.block, tankInfo.centered);
 			}
 		}
-		static void DrawInterface(DrawingInfo dI, string Language, bool isTurret, bool isVeachle)
+		static void DrawInterface(DrawingInfo dI, bool isTurret, bool isVeachle)
 		{
 			string aiMode = "";
 			//string aiStatus = "";
 			Vector2 logoPos = new Vector2(-200, -200);
 			Vector2 modPos = new Vector2(100, -200);
 			Vector2 centerPos = rect.Center + logoPos + (marker * mult);
-			DrawLogo(dI.c, Language, dI.frame, centerPos, 0.7f);
+			DrawLogo(dI.c, dI.frame, centerPos, 0.7f);
 			if (isTurret)
 			{
 				aiMode = "Turret";
@@ -252,9 +297,15 @@ namespace IngameScript
 			else
 				frame.Add(new MySprite(SpriteType.TEXT, $"{Math.Round(distance / 1000, 2)} км", new Vector2(-20f, 40f) + centerPos, null, c, "DEBUG", TextAlignment.LEFT, 1f * scale)); // text1
 		}
-		static void DrawSight(Color c, MySpriteDrawFrame frame, Vector2 centerPos, float scale = 1f)
+		public static void DrawSight(DrawingInfo dI, float scale = 1f)
 		{
-			frame.Add(new MySprite()
+            /*Vector3D viewvector = dI.point;
+            if (!PrepeareCoords(dI.surface, dI.obspos, viewvector))
+                return;
+            Vector2 centerPos = rect.Center + (marker * mult);
+            var c = dI.c;
+            var f = dI.frame;
+            f.Add(new MySprite()
 			{
 				Type = 0,
 				Alignment = TextAlignment.CENTER,
@@ -264,7 +315,7 @@ namespace IngameScript
 				Color = c,
 				RotationOrScale = 0f
 			});
-			frame.Add(new MySprite()
+			f.Add(new MySprite()
 			{
 				Type = 0,
 				Alignment = TextAlignment.CENTER,
@@ -274,7 +325,7 @@ namespace IngameScript
 				Color = c,
 				RotationOrScale = 0f
 			});
-			frame.Add(new MySprite()
+			f.Add(new MySprite()
 			{
 				Type = 0,
 				Alignment = TextAlignment.CENTER,
@@ -284,7 +335,7 @@ namespace IngameScript
 				Color = c,
 				RotationOrScale = 0f
 			});
-			frame.Add(new MySprite()
+			f.Add(new MySprite()
 			{
 				Type = 0,
 				Alignment = TextAlignment.CENTER,
@@ -294,8 +345,22 @@ namespace IngameScript
 				Color = c,
 				RotationOrScale = 0f
 			});
-		}
-		static void DrawLogo(Color c, string Language, MySpriteDrawFrame frame, Vector2 centerPos, float scale = 1f)
+            if (searching)
+                DrawXSight(dI.c, f, centerPos);
+			*/
+            Vector3D viewvector = dI.point;
+            if (!PrepeareCoords(dI.surface, dI.obspos, viewvector))
+                return;
+            Vector2 centerPos = rect.Center + (marker * mult);
+            var c = dI.c;
+            var f = dI.frame;
+            f.Add(new MySprite(0, "SquareSimple", new Vector2(20f, 20f) * scale + centerPos, new Vector2(1f, 8f) * scale, c, null, TextAlignment.CENTER, -0.7854f)); // sprite1
+            f.Add(new MySprite(0, "SquareSimple", new Vector2(20f, -20f) * scale + centerPos, new Vector2(1f, 8f) * scale, c, null, TextAlignment.CENTER, 0.7854f)); // sprite6
+            f.Add(new MySprite(0, "SquareSimple", new Vector2(-20f, -20f) * scale + centerPos, new Vector2(1f, 8f) * scale, c, null, TextAlignment.CENTER, -0.7854f)); // sprite7
+            f.Add(new MySprite(0, "SquareSimple", new Vector2(-20f, 20f) * scale + centerPos, new Vector2(1f, 8f) * scale, c, null, TextAlignment.CENTER, 0.7854f)); // sprite8
+            return;
+        }
+		static void DrawLogo(Color c, MySpriteDrawFrame frame, Vector2 centerPos, float scale = 1f)
 		{
 			string scriptName = "FCS \"Ash\"";
 			frame.Add(new MySprite(0, "Triangle", new Vector2(145f, 17.5f) * scale + centerPos, new Vector2(50f, 42f) * scale, c, null, TextAlignment.CENTER, 3.1416f));
@@ -312,7 +377,7 @@ namespace IngameScript
 			frame.Add(new MySprite(0, "SquareSimple", new Vector2(68f, 15f) * scale + centerPos, new Vector2(153f, 34f) * scale, _BLACK, null, TextAlignment.CENTER, 0f));
 			frame.Add(new MySprite(SpriteType.TEXT, text, new Vector2(5f, 0f) * scale + centerPos, null, c, "DEBUG", TextAlignment.LEFT, 1f * scale)); // text1
 		}
-		static void DrawLockedMode(Color c, string Language, MySpriteDrawFrame frame, Vector2 centerPos, bool autotarget, float scale = 1f)
+		static void DrawLockedMode(Color c, MySpriteDrawFrame frame, Vector2 centerPos, bool autotarget, float scale = 1f)
 		{
 			if (autotarget)
 			{
@@ -325,7 +390,7 @@ namespace IngameScript
 				frame.Add(new MySprite(0, "Circle", new Vector2(-11f, 15f) * scale + centerPos, new Vector2(7f, 7f) * scale, c, null, TextAlignment.CENTER, 0f));
 			}
 		}
-		static void DrawWeaponInfo(Color c, string Language, DWI dwi, MySpriteDrawFrame frame, Vector2 centerPos, float scale = 1f)
+		static void DrawWeaponInfo(Color c, DWI dwi, MySpriteDrawFrame frame, Vector2 centerPos, float scale = 1f)
 		{
 			string name = dwi.name;
 			string weapomType = dwi.weaponDef.type;
@@ -334,15 +399,20 @@ namespace IngameScript
 			frame.Add(new MySprite(SpriteType.TEXT, weapomType, new Vector2(-11f, 50f) * scale + centerPos, null, c, "DEBUG", TextAlignment.LEFT, 1f * scale));
 			frame.Add(new MySprite(0, "Circle", new Vector2(-11f, 15f) * scale + centerPos, new Vector2(7f, 7f) * scale, c, null, TextAlignment.CENTER, 0f));
 		}
-		static void DrawXSight(Color c, MySpriteDrawFrame frame, Vector2 centerPos, float scale = 1f)
+		static void DrawAxisInfo(Color c, MySpriteDrawFrame frame, Vector2 centerPos, float scale = 1f)
+		{
+            frame.Add(new MySprite(SpriteType.TEXT, "MGS \"Axis\"", new Vector2(0f, -25f) * scale + centerPos, null, c, "DEBUG", TextAlignment.LEFT, 1f * scale));
+            frame.Add(new MySprite(0, "Circle", new Vector2(-11f, -10f) * scale + centerPos, new Vector2(7f, 7f) * scale, c, null, TextAlignment.CENTER, 0f));
+        }
+		/*static void DrawXSight(Color c, MySpriteDrawFrame frame, Vector2 centerPos, float scale = 1f)
 
 		{
 			frame.Add(new MySprite(0, "SquareSimple", new Vector2(20f, 20f) * scale + centerPos, new Vector2(1f, 8f) * scale, c, null, TextAlignment.CENTER, -0.7854f)); // sprite1
 			frame.Add(new MySprite(0, "SquareSimple", new Vector2(20f, -20f) * scale + centerPos, new Vector2(1f, 8f) * scale, c, null, TextAlignment.CENTER, 0.7854f)); // sprite6
 			frame.Add(new MySprite(0, "SquareSimple", new Vector2(-20f, -20f) * scale + centerPos, new Vector2(1f, 8f) * scale, c, null, TextAlignment.CENTER, -0.7854f)); // sprite7
 			frame.Add(new MySprite(0, "SquareSimple", new Vector2(-20f, 20f) * scale + centerPos, new Vector2(1f, 8f) * scale, c, null, TextAlignment.CENTER, 0.7854f)); // sprite8
-		}
-		static void DrawBox(Color c, MySpriteDrawFrame frame, Vector2 centerPos, float scale = 1f)
+		}*/
+		/*static void DrawBox(Color c, MySpriteDrawFrame frame, Vector2 centerPos, float scale = 1f)
 		{
 			frame.Add(new MySprite()
 			{
@@ -365,76 +435,34 @@ namespace IngameScript
 				RotationOrScale = 0f
 			}); // sprite2
 		}
+		*/
 		static void DrawPoint(Color c, MySpriteDrawFrame frame, Vector2 centerPos, float scale = 1f)
 		{
 			frame.Add(new MySprite(0, "Circle", new Vector2(0f, 0f) * scale + centerPos, new Vector2(5f, 5f) * scale, c, null, TextAlignment.CENTER, 0f)); // sprite1
 		}
-		static void DrawBoxCorners(Color c, MySpriteDrawFrame frame, Vector2 centerPos, float scale = 1f)
+        static void Point(Color c, MySpriteDrawFrame frame, Vector2 centerPos, float scale = 1f)
+        {
+            frame.Add(new MySprite(0, "SquareSimple", new Vector2(0f, 0f) * scale + centerPos, new Vector2(1f, 1f) * scale, c, null, TextAlignment.CENTER, 0f)); // sprite1
+            frame.Add(new MySprite(0, "SquareSimple", new Vector2(5f, 0f) * scale + centerPos, new Vector2(3f, 1f) * scale, c, null, TextAlignment.CENTER, 0f)); // sprite1
+            frame.Add(new MySprite(0, "SquareSimple", new Vector2(-5f, 0f) * scale + centerPos, new Vector2(3f, 1f) * scale, c, null, TextAlignment.CENTER, 0f)); // sprite1
+            frame.Add(new MySprite(0, "SquareSimple", new Vector2(0f, 5f) * scale + centerPos, new Vector2(1f, 3f) * scale, c, null, TextAlignment.CENTER, 0f)); // sprite1
+            frame.Add(new MySprite(0, "SquareSimple", new Vector2(0f, -5f) * scale + centerPos, new Vector2(1f, 3f) * scale, c, null, TextAlignment.CENTER, 0f)); // sprite1
+        }
+        static void MPoint(Color c, MySpriteDrawFrame frame, Vector2 centerPos, float scale = 1f)
+        {
+            frame.Add(new MySprite(0, "Triangle", new Vector2(0f, 0f) * scale + centerPos, new Vector2(5f, 5f) * scale, c, null, TextAlignment.CENTER, 0f)); // sprite1
+        }
+        static void DrawBoxCorners(Color c, MySpriteDrawFrame frame, Vector2 centerPos, float scale = 1f)
 		{
-			frame.Add(new MySprite()
-			{
-				Type = 0,
-				Alignment = TextAlignment.CENTER,
-				Data = "SquareSimple",
-				Position = new Vector2(0f, 0f) * scale + centerPos,
-				Size = new Vector2(30f, 30f) * scale,
-				Color = c,
-				RotationOrScale = 0f
-			}); // sprite1
-			frame.Add(new MySprite()
-			{
-				Type = 0,
-				Alignment = TextAlignment.CENTER,
-				Data = "SquareSimple",
-				Position = new Vector2(0f, 0f) * scale + centerPos,
-				Size = new Vector2(28f, 28f) * scale,
-				Color = _BLACK,
-				RotationOrScale = 0f
-			}); // sprite2
-			frame.Add(new MySprite()
-			{
-				Type = 0,
-				Alignment = TextAlignment.CENTER,
-				Data = "SquareSimple",
-				Position = new Vector2(0f, 0f) * scale + centerPos,
-				Size = new Vector2(20f, 30f) * scale,
-				Color = new Color(0, 0, 0, 255),
-				RotationOrScale = 0f
-			}); // sprite2
-			frame.Add(new MySprite()
-			{
-				Type = 0,
-				Alignment = TextAlignment.CENTER,
-				Data = "SquareSimple",
-				Position = new Vector2(0f, 0f) * scale + centerPos,
-				Size = new Vector2(30f, 20f) * scale,
-				Color = new Color(0, 0, 0, 255),
-				RotationOrScale = 0f
-			}); // sprite3
-		}
-		static void DrawCircle(Color c, MySpriteDrawFrame frame, Vector2 centerPos, float scale = 1f)
-		{
-			frame.Add(new MySprite()
-			{
-				Type = 0,
-				Alignment = TextAlignment.CENTER,
-				Data = "Circle",
-				Position = new Vector2(0f, 0f) * scale + centerPos,
-				Size = new Vector2(20f, 20f) * scale,
-				Color = c,
-				RotationOrScale = 0f
-			}); // sprite1
-			frame.Add(new MySprite()
-			{
-				Type = 0,
-				Alignment = TextAlignment.CENTER,
-				Data = "Circle",
-				Position = new Vector2(0f, 0f) * scale + centerPos,
-				Size = new Vector2(18f, 18f) * scale,
-				Color = _BLACK,
-				RotationOrScale = 0f
-			}); // sprite2
-		}
+            frame.Add(new MySprite(0, "SquareSimple", new Vector2(15f, 13f) +  centerPos, new Vector2(1f, 5f), c, null, TextAlignment.CENTER, 0f)); // Left
+            frame.Add(new MySprite(0, "SquareSimple", new Vector2(13f, 15f) + centerPos, new Vector2(5f, 1f), c, null, TextAlignment.CENTER, 0f)); // 
+            frame.Add(new MySprite(0, "SquareSimple", new Vector2(15f, -13f) + centerPos, new Vector2(1f, 5f), c, null, TextAlignment.CENTER, 0f)); // Left
+            frame.Add(new MySprite(0, "SquareSimple", new Vector2(13f, -15f) + centerPos, new Vector2(5f, 1f), c, null, TextAlignment.CENTER, 0f)); // 
+            frame.Add(new MySprite(0, "SquareSimple", new Vector2(-15f, 13f) + centerPos, new Vector2(1f, 5f), c, null, TextAlignment.CENTER, 0f)); // Left
+            frame.Add(new MySprite(0, "SquareSimple", new Vector2(-13f, 15f) + centerPos, new Vector2(5f, 1f), c, null, TextAlignment.CENTER, 0f)); // 
+            frame.Add(new MySprite(0, "SquareSimple", new Vector2(-15f, -13f) + centerPos, new Vector2(1f, 5f), c, null, TextAlignment.CENTER, 0f)); // Left
+            frame.Add(new MySprite(0, "SquareSimple", new Vector2(-13f, -15f) + centerPos, new Vector2(5f, 1f), c, null, TextAlignment.CENTER, 0f)); // 
+        }
 		public static bool GetObserverPos(ref Vector3D? k, ref Vector3D? forwardDirection, float up, float backward, IMyShipController cockpit = null, List<IMyCameraBlock> all_cams = null)
 		{
 			//List<IMyCameraBlock> all_cams = new List<IMyCameraBlock>();
@@ -465,37 +493,44 @@ namespace IngameScript
 			else
 				return false;
 		}
-		public static void DrawSpriteX(Color c, MySpriteDrawFrame frame, Vector2 centerPos, float scale = 1f, float rotation = 0f)
+		public static void DrawMT(Color c, MySpriteDrawFrame f, Vector2 v, float scale = 1f)
 		{
-			float sin = (float)Math.Sin(rotation);
-			float cos = (float)Math.Cos(rotation);
-			frame.Add(new MySprite(0, "SquareSimple", new Vector2(cos * 0f - sin * 0f, sin * 0f + cos * 0f) * scale + centerPos, new Vector2(2f, 10f) * scale, c, null, TextAlignment.CENTER, 0.7854f + rotation)); // sprite1
-			frame.Add(new MySprite(0, "SquareSimple", new Vector2(cos * 0f - sin * 0f, sin * 0f + cos * 0f) * scale + centerPos, new Vector2(10f, 2f) * scale, c, null, TextAlignment.CENTER, 0.7854f + rotation)); // sprite2
-			DrawPoint(_BLACK, frame, centerPos, 1.5f);
+			/*
+            f.Add(new MySprite(0, "SquareSimple", new Vector2(0f, 0f) * scale + v, new Vector2(1f, 1f) * scale, c, null, TextAlignment.CENTER, 0f)); // sprite1
+            f.Add(new MySprite(0, "SquareSimple", new Vector2(5f, 0f) * scale + v, new Vector2(3f, 1f) * scale, c, null, TextAlignment.CENTER, 0f)); // sprite1
+            f.Add(new MySprite(0, "SquareSimple", new Vector2(-5f, 0f) * scale + v, new Vector2(3f, 1f) * scale, c, null, TextAlignment.CENTER, 0f)); // sprite1
+            f.Add(new MySprite(0, "SquareSimple", new Vector2(0f, 5f) * scale + v, new Vector2(1f, 3f) * scale, c, null, TextAlignment.CENTER, 0f)); // sprite1
+            f.Add(new MySprite(0, "SquareSimple", new Vector2(0f, -5f) * scale + v, new Vector2(1f, 3f) * scale, c, null, TextAlignment.CENTER, 0f)); // sprite1
+			*/
+            f.Add(new MySprite(0, "SquareSimple", new Vector2(0, 0) * scale + v, new Vector2(1f, 1f) * scale, c, null, TextAlignment.CENTER)); // sprite1
+            f.Add(new MySprite(0, "SquareSimple", new Vector2(7f, 5f) + v, new Vector2(1f, 5f), c, null, TextAlignment.CENTER, 0f)); // Left
+            f.Add(new MySprite(0, "SquareSimple", new Vector2(5f, 7f) + v, new Vector2(5f, 1f), c, null, TextAlignment.CENTER, 0f)); // 
+            f.Add(new MySprite(0, "SquareSimple", new Vector2(-7f, 5f) + v, new Vector2(1f, 5f), c, null, TextAlignment.CENTER, 0f)); // Left
+            f.Add(new MySprite(0, "SquareSimple", new Vector2(-5f, 7f) + v, new Vector2(5f, 1f), c, null, TextAlignment.CENTER, 0f)); // 
+            f.Add(new MySprite(0, "SquareSimple", new Vector2(7f, -5f) + v, new Vector2(1f, 5f), c, null, TextAlignment.CENTER, 0f)); // Left
+            f.Add(new MySprite(0, "SquareSimple", new Vector2(5f, -7f) + v, new Vector2(5f, 1f), c, null, TextAlignment.CENTER, 0f)); // 
+            f.Add(new MySprite(0, "SquareSimple", new Vector2(-7f, -5f) + v, new Vector2(1f, 5f), c, null, TextAlignment.CENTER, 0f)); // Left
+            f.Add(new MySprite(0, "SquareSimple", new Vector2(-5f, -7f) + v, new Vector2(5f, 1f), c, null, TextAlignment.CENTER, 0f)); // 
+            //DrawPoint(_BLACK, f, centerPos, 1.5f);
 			/*DrawPoint(c, frame, centerPos + new Vector2(4f, 4f), 0.7f);
 			DrawPoint(c, frame, centerPos + new Vector2(-4f, 4f), 0.7f);
 			DrawPoint(c, frame, centerPos + new Vector2(4f, -4f), 0.7f);
 			DrawPoint(c, frame, centerPos + new Vector2(-4f, -4f), 0.7f);
 			*/
-		}
-
-		public static void DrawSpritesRectangle(Color c, MySpriteDrawFrame frame, Vector2 centerPos, float scale = 1f)
-		{
-			frame.Add(new MySprite(0, "SquareSimple", new Vector2(4f, 0f) * scale + centerPos, new Vector2(2f, 10f) * scale, c, null, TextAlignment.CENTER, 0f)); // right
-			frame.Add(new MySprite(0, "SquareSimple", new Vector2(-4f, 0f) * scale + centerPos, new Vector2(2f, 10f) * scale, c, null, TextAlignment.CENTER, 0f)); // left
-			frame.Add(new MySprite(0, "SquareSimple", new Vector2(0f, -4f) * scale + centerPos, new Vector2(10f, 2f) * scale, c, null, TextAlignment.CENTER, 0f)); // down
-			frame.Add(new MySprite(0, "SquareSimple", new Vector2(0f, 4f) * scale + centerPos, new Vector2(10f, 2f) * scale, c, null, TextAlignment.CENTER, 0f)); // top
-		}
-
-		public static void DrawSpritesRectangleRotateAndScale(Color c, MySpriteDrawFrame frame, Vector2 centerPos, float scale = 1f, float rotation = 0f)
-		{
-			float sin = (float)Math.Sin(rotation);
-			float cos = (float)Math.Cos(rotation);
-			frame.Add(new MySprite(0, "SquareSimple", new Vector2(cos * 4f - sin * 0f, sin * 4f + cos * 0f) * scale + centerPos, new Vector2(2f, 10f) * scale, c, null, TextAlignment.CENTER, 0f + rotation)); // right
-			frame.Add(new MySprite(0, "SquareSimple", new Vector2(cos * -4f - sin * 0f, sin * -4f + cos * 0f) * scale + centerPos, new Vector2(2f, 10f) * scale, c, null, TextAlignment.CENTER, 0f + rotation)); // left
-			frame.Add(new MySprite(0, "SquareSimple", new Vector2(cos * 0f - sin * -4f, sin * 0f + cos * -4f) * scale + centerPos, new Vector2(10f, 2f) * scale, c, null, TextAlignment.CENTER, 0f + rotation)); // down
-			frame.Add(new MySprite(0, "SquareSimple", new Vector2(cos * 0f - sin * 4f, sin * 0f + cos * 4f) * scale + centerPos, new Vector2(10f, 2f) * scale, c, null, TextAlignment.CENTER, 0f + rotation)); // top
-		}
+        }
+		public static void DrawAP(Color c, MySpriteDrawFrame f, Vector2 v, string name, float range)
+        {
+            f.Add(new MySprite(0, "SquareSimple", new Vector2(10f, 0f) + v, new Vector2(2f, 22), c, null, TextAlignment.CENTER, 0f));
+            f.Add(new MySprite(0, "SquareSimple", new Vector2(0f, 10f) + v, new Vector2(22, 2f), c, null, TextAlignment.CENTER, 0f));
+            f.Add(new MySprite(0, "SquareSimple", new Vector2(-10f, 0f) + v, new Vector2(2f, 22), c, null, TextAlignment.CENTER, 0f));
+            f.Add(new MySprite(0, "SquareSimple", new Vector2(0f, -10f) + v, new Vector2(22, 2f), c, null, TextAlignment.CENTER, 0f));
+            f.Add(new MySprite(SpriteType.TEXT, name, new Vector2(14f, -21f) + v, null, c, "DEBUG", TextAlignment.LEFT, 1f * 0.7f));
+			string r;
+			if (range < 1000)
+				r = $"{Math.Round(range, 0)} м";
+			else r = $"{Math.Round(range / 1000, 2)} км";
+			f.Add(new MySprite(SpriteType.TEXT, r, new Vector2(14f, -2f) + v, null, c, "DEBUG", TextAlignment.LEFT, 1f * 0.7f));
+        }
 		public static void DrawTurret(Color c, MySpriteDrawFrame frame, Vector2 centerPos, float rotation = 0f)
 		{
 			float sin = (float)Math.Sin(rotation);
@@ -532,40 +567,6 @@ namespace IngameScript
 				return new DisplayDef() { Delta = 1.25f, Multiplier = 240f, canvasOrientation = new Vector3I(1, 0, 0), fullBlock = false };
 			else
 				return new DisplayDef() { Delta = 0.25f - 0.005f, Multiplier = 1080f, canvasOrientation = new Vector3I(1, 0, 0), fullBlock = false };
-		}
-		public static void AddExceptionMessage(StringBuilder builder, Exception e)
-		{
-			builder
-				.AppendLine("\n-------Crash message-------")
-				.Append(e.GetType().ToString())
-				.Append(": ")
-				.AppendLine(e.Message);
-			{
-				var innerException = e.InnerException;
-				while (innerException != null)
-				{
-					builder
-						.Append("\n-----Inner exception-----\n")
-						.Append(innerException.GetType().ToString())
-						.Append(": ")
-						.Append(innerException.Message);
-					innerException = innerException.InnerException;
-				}
-			}
-
-			builder
-				.Append("\n\n-------Stack trace-------\n")
-				.Append(e.StackTrace);
-			{
-				var innerException = e.InnerException;
-				while (innerException != null)
-				{
-					builder
-						.Append("\n-----Inner exception-----\n")
-						.Append(innerException.StackTrace);
-					innerException = innerException.InnerException;
-				}
-			}
 		}
 	}
 	public class DrawingInfo
